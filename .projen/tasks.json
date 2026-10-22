@@ -1,0 +1,411 @@
+{
+  "manifestVersion": 3,
+  "env": {
+    "PATH": "$(bun --eval \"console.log(process.env.PATH)\")"
+  },
+  "tasks": {
+    "appkit:deploy": {
+      "name": "appkit:deploy",
+      "description": "Deploy the AppKit application from an npm-compatible source snapshot",
+      "steps": [
+        {
+          "execArgs": [
+            "bun",
+            "node_modules/@dbx-tools/projen/tasks/appkit-deploy.ts",
+            "--directory",
+            "packages/app"
+          ],
+          "receiveArgs": true
+        }
+      ]
+    },
+    "appkit:sync": {
+      "name": "appkit:sync",
+      "description": "Synchronize installed AppKit plugin metadata",
+      "steps": [
+        {
+          "exec": "appkit plugin sync --write --silent"
+        }
+      ],
+      "cwd": "packages/app"
+    },
+    "appkit:typegen": {
+      "name": "appkit:typegen",
+      "description": "Generate AppKit client declarations",
+      "steps": [
+        {
+          "exec": "appkit generate-types"
+        }
+      ],
+      "cwd": "packages/app"
+    },
+    "barrels": {
+      "name": "barrels",
+      "steps": [
+        {
+          "execArgs": [
+            "bun",
+            "node_modules/@dbx-tools/projen/tasks/barrels.ts"
+          ]
+        }
+      ]
+    },
+    "build": {
+      "name": "build",
+      "description": "Full release build",
+      "steps": [
+        {
+          "spawn": "default"
+        },
+        {
+          "spawn": "pre-compile"
+        },
+        {
+          "spawn": "compile"
+        },
+        {
+          "spawn": "post-compile"
+        },
+        {
+          "spawn": "test"
+        },
+        {
+          "spawn": "package"
+        }
+      ]
+    },
+    "check": {
+      "name": "check",
+      "description": "Validate the generated workspace with Bun",
+      "steps": [
+        {
+          "spawn": "build"
+        }
+      ]
+    },
+    "clean": {
+      "name": "clean",
+      "steps": [
+        {
+          "execArgs": [
+            "bun",
+            "node_modules/@dbx-tools/projen/tasks/clean.ts"
+          ],
+          "receiveArgs": true
+        }
+      ]
+    },
+    "clobber": {
+      "name": "clobber",
+      "description": "hard resets to HEAD of origin and cleans the local repo",
+      "env": {
+        "BRANCH": "$(git branch --show-current)"
+      },
+      "steps": [
+        {
+          "execArgs": [
+            "git",
+            "checkout",
+            "-b",
+            "scratch"
+          ],
+          "name": "save current HEAD in \"scratch\" branch"
+        },
+        {
+          "exec": "git checkout \"$BRANCH\""
+        },
+        {
+          "execArgs": [
+            "git",
+            "fetch",
+            "origin"
+          ],
+          "name": "fetch latest changes from origin"
+        },
+        {
+          "exec": "git reset --hard \"origin/$BRANCH\"",
+          "name": "hard reset to origin commit"
+        },
+        {
+          "execArgs": [
+            "git",
+            "clean",
+            "-fdx"
+          ],
+          "name": "clean all untracked files"
+        },
+        {
+          "say": "ready to rock! (unpushed commits are under the \"scratch\" branch)"
+        }
+      ],
+      "condition": "git diff --exit-code > /dev/null"
+    },
+    "compile": {
+      "name": "compile",
+      "description": "Only compile",
+      "steps": [
+        {
+          "execArgs": [
+            "bun",
+            "node_modules/@dbx-tools/projen/tasks/compile-workspace.ts"
+          ]
+        }
+      ]
+    },
+    "default": {
+      "name": "default",
+      "description": "Synthesize project files",
+      "steps": [
+        {
+          "exec": "bun .projenrc.ts"
+        }
+      ]
+    },
+    "deploy": {
+      "name": "deploy",
+      "description": "Validate with Bun and deploy the AppKit application",
+      "steps": [
+        {
+          "spawn": "check"
+        },
+        {
+          "spawn": "appkit:deploy"
+        }
+      ]
+    },
+    "dev": {
+      "name": "dev",
+      "description": "Run the AppKit server in development mode",
+      "env": {
+        "NODE_ENV": "development"
+      },
+      "steps": [
+        {
+          "exec": "bun --watch server/server.ts",
+          "receiveArgs": true
+        }
+      ],
+      "cwd": "packages/app"
+    },
+    "dev:watch": {
+      "name": "dev:watch",
+      "description": "Restart a development command after watched changes settle",
+      "steps": [
+        {
+          "execArgs": [
+            "bun",
+            "node_modules/@dbx-tools/projen/tasks/dev-watch.ts"
+          ],
+          "receiveArgs": true
+        }
+      ]
+    },
+    "eject": {
+      "name": "eject",
+      "description": "Remove projen from the project",
+      "env": {
+        "PROJEN_EJECTING": "true"
+      },
+      "steps": [
+        {
+          "spawn": "default"
+        }
+      ]
+    },
+    "eslint": {
+      "name": "eslint",
+      "description": "Runs eslint against the codebase",
+      "env": {
+        "ESLINT_USE_FLAT_CONFIG": "false",
+        "NODE_NO_WARNINGS": "1"
+      },
+      "steps": [
+        {
+          "execArgs": [
+            "eslint",
+            "--ext",
+            ".ts,.tsx",
+            "--no-error-on-unmatched-pattern",
+            "$@",
+            "packages",
+            "packages/app"
+          ],
+          "receiveArgs": true
+        }
+      ]
+    },
+    "eslint:fix": {
+      "name": "eslint:fix",
+      "description": "Fix ESLint issues across the codebase",
+      "steps": [
+        {
+          "exec": "bun run eslint -- --fix"
+        }
+      ]
+    },
+    "format": {
+      "name": "format",
+      "steps": [
+        {
+          "exec": "prettier . --write",
+          "receiveArgs": true
+        }
+      ]
+    },
+    "install": {
+      "name": "install",
+      "description": "Install project dependencies and update lockfile (non-frozen)",
+      "steps": [
+        {
+          "exec": "bun scripts/check-bun.ts"
+        },
+        {
+          "exec": "bun install"
+        }
+      ]
+    },
+    "install:ci": {
+      "name": "install:ci",
+      "description": "Install project dependencies using frozen lockfile",
+      "steps": [
+        {
+          "exec": "bun scripts/check-bun.ts"
+        },
+        {
+          "exec": "bun install"
+        }
+      ]
+    },
+    "package": {
+      "name": "package",
+      "description": "Creates the distribution package"
+    },
+    "post-compile": {
+      "name": "post-compile",
+      "description": "Runs after successful compilation"
+    },
+    "pre-compile": {
+      "name": "pre-compile",
+      "description": "Prepare the project for compilation"
+    },
+    "start": {
+      "name": "start",
+      "description": "Run the AppKit server in production mode",
+      "env": {
+        "NODE_ENV": "production"
+      },
+      "steps": [
+        {
+          "exec": "bun server/server.ts",
+          "receiveArgs": true
+        }
+      ],
+      "cwd": "packages/app"
+    },
+    "sync": {
+      "name": "sync",
+      "steps": [
+        {
+          "execArgs": [
+            "bun",
+            "node_modules/@dbx-tools/projen/tasks/sync.ts"
+          ],
+          "receiveArgs": true
+        }
+      ]
+    },
+    "test": {
+      "name": "test",
+      "description": "Run tests",
+      "steps": [
+        {
+          "spawn": "eslint"
+        },
+        {
+          "spawn": "test:all"
+        }
+      ]
+    },
+    "test:all": {
+      "name": "test:all",
+      "description": "Run all JavaScript, TypeScript, and Python tests",
+      "steps": [
+        {
+          "execArgs": [
+            "bun",
+            "node_modules/@dbx-tools/projen/tasks/test-workspace.ts",
+            "all"
+          ]
+        }
+      ]
+    },
+    "test:changed": {
+      "name": "test:changed",
+      "description": "Run tests for changed packages and their dependents",
+      "steps": [
+        {
+          "execArgs": [
+            "bun",
+            "node_modules/@dbx-tools/projen/tasks/test-workspace.ts",
+            "changed"
+          ],
+          "receiveArgs": true
+        }
+      ]
+    },
+    "test:focused": {
+      "name": "test:focused",
+      "description": "Run tests for explicit workspace packages or paths",
+      "steps": [
+        {
+          "execArgs": [
+            "bun",
+            "node_modules/@dbx-tools/projen/tasks/test-workspace.ts",
+            "focused"
+          ],
+          "receiveArgs": true
+        }
+      ]
+    },
+    "test:integration": {
+      "name": "test:integration",
+      "description": "Run integration and packed-consumer tests",
+      "steps": [
+        {
+          "execArgs": [
+            "bun",
+            "node_modules/@dbx-tools/projen/tasks/test-workspace.ts",
+            "integration"
+          ]
+        }
+      ]
+    },
+    "test:unit": {
+      "name": "test:unit",
+      "description": "Run unit tests in grouped root runners",
+      "steps": [
+        {
+          "execArgs": [
+            "bun",
+            "node_modules/@dbx-tools/projen/tasks/test-workspace.ts",
+            "unit"
+          ]
+        }
+      ]
+    },
+    "workspace:graph": {
+      "name": "workspace:graph",
+      "description": "Write the workspace dependency and reverse-dependency graph",
+      "steps": [
+        {
+          "execArgs": [
+            "bun",
+            "node_modules/@dbx-tools/projen/tasks/test-workspace.ts",
+            "graph"
+          ]
+        }
+      ]
+    }
+  },
+  "//": "~~ Generated by projen. To modify, edit .projenrc.ts and run \"bunx projen\"."
+}

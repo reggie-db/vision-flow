@@ -1,0 +1,17 @@
+{
+  "name": "Dynamic OCR",
+  "short_name": "OCR",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ],
+  "theme_color": "#012169",
+  "background_color": "#1b2230",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "start_url": "/"
+}

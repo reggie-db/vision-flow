@@ -1,0 +1,10 @@
+{
+  "packages": [
+    {
+      "name": "@lottery-ocr/app",
+      "path": "packages/app",
+      "dependencies": [],
+      "reverseDependencies": []
+    }
+  ]
+}

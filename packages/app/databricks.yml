@@ -1,0 +1,254 @@
+bundle:
+  name: dynamic-ocr
+
+variables:
+  catalog:
+    description: Unity Catalog catalog for pipeline outputs
+    default: reggie_pierce_aws_catalog
+  schema:
+    description: Unity Catalog schema for pipeline outputs
+    default: cstore_ops
+  quick_model_service:
+    description: Low-latency Unity Gateway model used for category resolution and pre-upload image checks
+    default: system.ai.gpt-5-mini
+  dashboard_model_service:
+    description: Model used to generate schema-specific AI/BI dashboard page plans
+    default: system.ai.gpt-5-mini
+  extraction_model_service:
+    description: Strong vision model used by the Spark pipeline for schema-constrained extraction
+    default: system.ai.gpt-5-5
+  embedding_endpoint:
+    description: Model Serving endpoint used for category contract embeddings
+    default: databricks-gte-large-en
+  documents_volume:
+    description: Unity Catalog volume root for immutable schema/version document uploads
+    default: reggie_pierce_aws_catalog.cstore_ops.ocr_source_images
+  lakebase_project_id:
+    description: Lakebase Autoscaling project ID
+    default: lottery-ocr
+  lakebase_branch_id:
+    description: Lakebase branch ID
+    default: production
+  lakebase_endpoint_id:
+    description: Lakebase read-write endpoint ID
+    default: primary
+  lakebase_database_name:
+    description: Lakebase Postgres database name
+    default: lottery_ocr
+  lakebase_database_id:
+    description: Lakebase database resource ID
+    default: lottery-ocr
+  lakebase_role_name:
+    description: Shared password role used by the app and Spark workers
+    default: lottery_ocr_runtime
+  app_service_principal_client_id:
+    description: Databricks App service principal client ID granted the shared Lakebase role
+    default: 7114571e-28e1-4a1d-94de-c65cedf5be02
+  lakebase_database_owner_role_id:
+    description: Existing Lakebase OAuth role ID that owns the database control-plane resource
+    default: reggie-pierce
+  lakebase_secret_scope:
+    description: Secret scope containing the shared Lakebase password
+    default: lottery-ocr
+  lakebase_password_key:
+    description: Secret key containing the shared Lakebase password
+    default: lakebase-password
+  lakebase_user_key:
+    description: Secret key containing the shared Lakebase role name
+    default: lakebase-user
+  meta_schema:
+    description: Lakebase schema for category registry and processing metadata
+    default: ocr_meta
+  documents_table:
+    description: Single Delta table containing all OCR document payloads
+    default: ocr_documents
+  lakebase_connection:
+    description: Unity Catalog PostgreSQL connection used to read the Lakebase schema registry
+    default: ocr_lakebase
+  schema_registry_view:
+    description: Unity Catalog view exposing active Lakebase OCR schemas
+    default: ocr_schema_registry
+  genie_catalog:
+    description: Existing writable Unity Catalog catalog containing typed Delta mirrors for Genie
+    default: reggie_pierce_aws_catalog
+  genie_schema:
+    description: Existing writable Unity Catalog schema containing typed Delta mirrors for Genie
+    default: cstore_ops
+  genie_space_id:
+    description: Curated Genie space updated as categories become ready
+    default: 01f1ccd35062104083dd7fc48b37f4df
+  genie_space_name:
+    description: Display name of the curated Genie space
+    default: OCR
+  genie_warehouse_id:
+    description: SQL warehouse used to verify Lakebase catalog readability and power Genie
+    default: a2171589c3905bc7
+  dashboard_display_name:
+    description: Display name of the shared AI/BI dashboard with one generated page per OCR schema
+    default: OCR Analytics
+  dashboard_id:
+    description: Existing AI/BI dashboard updated as OCR schemas are created, renamed, and deleted
+    default: 01f1cd7c4bcf128daaacdfe8894b0f64
+  workspace_host:
+    description: Workspace host used for dashboard links in the PWA
+    default: https://fevm-reggie-pierce-aws.cloud.databricks.com
+  genie_max_tables:
+    description: Maximum Genie tables and views allowed by the platform
+    default: 30
+  mastra_genie_identity:
+    description: Databricks identity used by the Mastra assistant for model, Genie, and statement calls
+    default: service-principal
+  review_threshold:
+    description: Self-assessed confidence threshold below which extraction needs review
+    default: 0.80
+  worker_schema_cache_size:
+    description: Maximum immutable category schema versions cached per Spark worker
+    default: 128
+  worker_pool_cache_size:
+    description: Maximum PostgreSQL pools cached per Spark worker
+    default: 1
+  pipeline_trigger_interval:
+    description: Micro-batch trigger interval for the continuous OCR pipeline
+    default: 1 second
+  app_started:
+    description: Whether the Databricks App should be running after deployment
+    default: true
+
+resources:
+  dashboards:
+    ocr_dashboard:
+      display_name: ${var.dashboard_display_name}
+      dataset_catalog: ${var.genie_catalog}
+      dataset_schema: ${var.genie_schema}
+      file_path: ./dashboards/ocr.lvdash.json
+      warehouse_id: ${var.genie_warehouse_id}
+      embed_credentials: false
+      permissions:
+        - level: CAN_EDIT
+          service_principal_name: ${var.app_service_principal_client_id}
+        - level: CAN_READ
+          group_name: users
+  postgres_projects:
+    lakebase:
+      project_id: ${var.lakebase_project_id}
+      display_name: OCR Schemas
+      pg_version: 17
+      enable_pg_native_login: true
+      default_endpoint_settings:
+        autoscaling_limit_min_cu: 0.5
+        autoscaling_limit_max_cu: 2
+        suspend_timeout_duration: 300s
+      lifecycle:
+        prevent_destroy: true
+  postgres_branches:
+    production:
+      parent: ${resources.postgres_projects.lakebase.name}
+      branch_id: ${var.lakebase_branch_id}
+      replace_existing: true
+      no_expiry: true
+      lifecycle:
+        prevent_destroy: true
+  postgres_endpoints:
+    primary:
+      parent: ${resources.postgres_branches.production.name}
+      endpoint_id: ${var.lakebase_endpoint_id}
+      endpoint_type: ENDPOINT_TYPE_READ_WRITE
+      replace_existing: true
+      autoscaling_limit_min_cu: 0.5
+      autoscaling_limit_max_cu: 2
+      suspend_timeout_duration: 300s
+  postgres_databases:
+    database:
+      parent: ${resources.postgres_branches.production.name}
+      database_id: ${var.lakebase_database_id}
+      postgres_database: ${var.lakebase_database_name}
+      role: ${resources.postgres_branches.production.name}/roles/${var.lakebase_database_owner_role_id}
+      replace_existing: true
+      lifecycle:
+        prevent_destroy: true
+  apps:
+    app:
+      name: dynamic-ocr
+      description: Create reusable OCR schemas, scan images, and query nested Delta results with Genie
+      source_code_path: ./
+      lifecycle:
+        started: ${var.app_started}
+      resources:
+        - name: quick-model
+          uc_securable:
+            permission: EXECUTE
+            securable_full_name: ${var.quick_model_service}
+            securable_type: MODEL_SERVICE
+        - name: dashboard-model
+          uc_securable:
+            permission: EXECUTE
+            securable_full_name: ${var.dashboard_model_service}
+            securable_type: MODEL_SERVICE
+        - name: embedding-endpoint
+          serving_endpoint:
+            name: ${var.embedding_endpoint}
+            permission: CAN_QUERY
+        - name: documents-volume
+          uc_securable:
+            permission: WRITE_VOLUME
+            securable_full_name: ${var.documents_volume}
+            securable_type: VOLUME
+        - name: postgres
+          postgres:
+            branch: ${resources.postgres_branches.production.name}
+            database: ${resources.postgres_databases.database.name}
+            permission: CAN_CONNECT_AND_CREATE
+        - name: lakebase-password
+          secret:
+            scope: ${var.lakebase_secret_scope}
+            key: ${var.lakebase_password_key}
+            permission: READ
+        - name: genie-space
+          genie_space:
+            name: ${var.genie_space_name}
+            space_id: ${var.genie_space_id}
+            permission: CAN_MANAGE
+        - name: sql-warehouse
+          sql_warehouse:
+            id: ${var.genie_warehouse_id}
+            permission: CAN_USE
+  pipelines:
+    ocr_pipeline:
+      name: dynamic_ocr
+      catalog: ${var.catalog}
+      schema: ${var.schema}
+      serverless: true
+      continuous: true
+      libraries:
+        - glob:
+            include: ./src/pipelines/**
+      environment:
+        dependencies:
+          - databricks-sdk>=0.76.0
+          - psycopg[pool]>=3.2.10
+      configuration:
+        pipelines.trigger.interval: ${var.pipeline_trigger_interval}
+        ocr.volume: ${var.documents_volume}
+        ocr.model_service: ${var.extraction_model_service}
+        ocr.lakebase_project: projects/${var.lakebase_project_id}
+        ocr.lakebase_branch: projects/${var.lakebase_project_id}/branches/${var.lakebase_branch_id}
+        ocr.lakebase_endpoint: projects/${var.lakebase_project_id}/branches/${var.lakebase_branch_id}/endpoints/${var.lakebase_endpoint_id}
+        ocr.lakebase_database: ${var.lakebase_database_name}
+        ocr.lakebase_role: ${var.lakebase_role_name}
+        ocr.secret_scope: ${var.lakebase_secret_scope}
+        ocr.password_key: ${var.lakebase_password_key}
+        ocr.meta_schema: ${var.meta_schema}
+        ocr.documents_table: ${var.documents_table}
+        ocr.genie_catalog: ${var.genie_catalog}
+        ocr.genie_schema: ${var.genie_schema}
+        ocr.review_threshold: ${var.review_threshold}
+        ocr.worker_schema_cache_size: ${var.worker_schema_cache_size}
+        ocr.worker_pool_cache_size: ${var.worker_pool_cache_size}
+        bundle.sourcePath: ${workspace.file_path}/src
+
+targets:
+  default:
+    default: true
+    workspace:
+      host: https://fevm-reggie-pierce-aws.cloud.databricks.com
+      profile: FEVM-REGGIE-PIERCE-AWS
