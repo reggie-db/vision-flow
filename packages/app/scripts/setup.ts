@@ -103,6 +103,7 @@ const branch = variable('lakebase_branch_id');
 const endpointId = variable('lakebase_endpoint_id');
 const databaseName = variable('lakebase_database_name');
 const appName = variable('app_name');
+const volumeFullName = [variable('catalog'), variable('schema'), variable('documents_volume_name')].join('.');
 const lakebase = createLakebaseClient({ profile });
 const resolved = await lakebase.resolve({ project, branch, endpointId, database: databaseName }, profile);
 const oauthPassword = await lakebase.generateDatabaseCredential(resolved.endpoint, profile);
@@ -153,7 +154,7 @@ Object.assign(process.env, {
   VISION_FLOW_MODEL_SERVICE: variable('quick_model_service'),
   VISION_FLOW_DASHBOARD_MODEL_SERVICE: variable('dashboard_model_service'),
   VISION_FLOW_EMBEDDING_ENDPOINT: variable('embedding_endpoint'),
-  VISION_FLOW_VOLUME_FULL_NAME: variable('documents_volume'),
+  VISION_FLOW_VOLUME_FULL_NAME: volumeFullName,
   VISION_FLOW_LAKEBASE_PROJECT: project,
   VISION_FLOW_LAKEBASE_BRANCH: branch,
   VISION_FLOW_LAKEBASE_ENDPOINT: resolved.endpoint,

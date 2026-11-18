@@ -48,7 +48,7 @@ const resolved = await createLakebaseClient({ profile }).resolve(
   { project, branch, endpointId, database: databaseName },
   profile,
 );
-const volumeFullName = variable('documents_volume');
+const volumeFullName = [variable('catalog'), variable('schema'), variable('documents_volume_name')].join('.');
 
 Object.assign(process.env, {
   NODE_ENV: process.env.NODE_ENV ?? 'production',

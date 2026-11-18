@@ -24,6 +24,12 @@ function bundleVariable(name: string): string {
   return String(value);
 }
 
+const documentsVolumeFullName = [
+  bundleVariable("catalog"),
+  bundleVariable("schema"),
+  bundleVariable("documents_volume_name"),
+].join(".");
+
 const rootProject = new projectJs.DBXToolsNodeProject({
   name: "vision-flow",
   scope: "vision-flow",
@@ -47,7 +53,7 @@ project.applyToProjects(rootProject, { path: "packages/app" }, (app) => {
         { name: "VISION_FLOW_MODEL_SERVICE", valueFrom: "quick-model" },
         { name: "VISION_FLOW_DASHBOARD_MODEL_SERVICE", valueFrom: "dashboard-model" },
         { name: "VISION_FLOW_EMBEDDING_ENDPOINT", valueFrom: "embedding-endpoint" },
-        { name: "VISION_FLOW_VOLUME_FULL_NAME", value: bundleVariable("documents_volume") },
+        { name: "VISION_FLOW_VOLUME_FULL_NAME", value: documentsVolumeFullName },
         { name: "VISION_FLOW_LAKEBASE_PROJECT", value: `projects/${bundleVariable("lakebase_project_id")}` },
         {
           name: "VISION_FLOW_LAKEBASE_BRANCH",

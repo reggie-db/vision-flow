@@ -23,9 +23,9 @@ variables:
   embedding_endpoint:
     description: Model Serving endpoint used for category contract embeddings
     default: databricks-gte-large-en
-  documents_volume:
-    description: Unity Catalog volume root for immutable schema/version document uploads
-    default: reggie_pierce_aws_catalog.cstore_ops.vision_source_images
+  documents_volume_name:
+    description: Unity Catalog managed volume for immutable schema/version image uploads
+    default: vision_source_images
   lakebase_project_id:
     description: Lakebase Autoscaling project ID
     default: vision-flow
@@ -125,6 +125,13 @@ resources:
           service_principal_name: ${resources.apps.app.service_principal_client_id}
         - level: CAN_READ
           group_name: users
+  volumes:
+    source_images:
+      catalog_name: ${var.catalog}
+      schema_name: ${var.schema}
+      name: ${var.documents_volume_name}
+      volume_type: MANAGED
+      comment: Source images awaiting schema-constrained vision extraction.
   postgres_projects:
     lakebase:
       project_id: ${var.lakebase_project_id}
@@ -188,7 +195,7 @@ resources:
         - name: documents-volume
           uc_securable:
             permission: WRITE_VOLUME
-            securable_full_name: ${var.documents_volume}
+            securable_full_name: ${var.catalog}.${var.schema}.${resources.volumes.source_images.name}
             securable_type: VOLUME
         - name: postgres
           postgres:
@@ -225,7 +232,7 @@ resources:
           - psycopg[pool]>=3.2.10
       configuration:
         pipelines.trigger.interval: ${var.pipeline_trigger_interval}
-        vision_flow.volume: ${var.documents_volume}
+        vision_flow.volume: ${var.catalog}.${var.schema}.${resources.volumes.source_images.name}
         vision_flow.model_service: ${var.extraction_model_service}
         vision_flow.lakebase_project: projects/${var.lakebase_project_id}
         vision_flow.lakebase_branch: projects/${var.lakebase_project_id}/branches/${var.lakebase_branch_id}
