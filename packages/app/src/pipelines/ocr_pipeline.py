@@ -64,7 +64,7 @@ def _documents_relation() -> str:
 def _pool(host: str, database: str, role: str, password: str) -> ConnectionPool:
     conninfo = (
         f"host={host} port=5432 dbname={database} user={role} "
-        f"password={password} sslmode=require application_name=dynamic_ocr_pipeline "
+        f"password={password} sslmode=require application_name=vision_flow_pipeline "
         f"options='-c role={role}'"
     )
     return ConnectionPool(conninfo=conninfo, min_size=0, max_size=1, open=True)

@@ -1,5 +1,5 @@
 bundle:
-  name: dynamic-ocr
+  name: vision-flow
 
 variables:
   catalog:
@@ -25,7 +25,7 @@ variables:
     default: reggie_pierce_aws_catalog.cstore_ops.ocr_source_images
   lakebase_project_id:
     description: Lakebase Autoscaling project ID
-    default: lottery-ocr
+    default: vision-flow
   lakebase_branch_id:
     description: Lakebase branch ID
     default: production
@@ -34,13 +34,13 @@ variables:
     default: primary
   lakebase_database_name:
     description: Lakebase Postgres database name
-    default: lottery_ocr
+    default: vision_flow
   lakebase_database_id:
     description: Lakebase database resource ID
-    default: lottery-ocr
+    default: vision-flow
   lakebase_role_name:
     description: Shared password role used by the app and Spark workers
-    default: lottery_ocr_runtime
+    default: vision_flow_runtime
   app_service_principal_client_id:
     description: Databricks App service principal client ID granted the shared Lakebase role
     default: 7114571e-28e1-4a1d-94de-c65cedf5be02
@@ -49,7 +49,7 @@ variables:
     default: reggie-pierce
   lakebase_secret_scope:
     description: Secret scope containing the shared Lakebase password
-    default: lottery-ocr
+    default: vision-flow
   lakebase_password_key:
     description: Secret key containing the shared Lakebase password
     default: lakebase-password
@@ -79,13 +79,13 @@ variables:
     default: 01f1ccd35062104083dd7fc48b37f4df
   genie_space_name:
     description: Display name of the curated Genie space
-    default: OCR
+    default: Vision Flow
   genie_warehouse_id:
     description: SQL warehouse used to verify Lakebase catalog readability and power Genie
     default: a2171589c3905bc7
   dashboard_display_name:
     description: Display name of the shared AI/BI dashboard with one generated page per OCR schema
-    default: OCR Analytics
+    default: Vision Flow Analytics
   dashboard_id:
     description: Existing AI/BI dashboard updated as OCR schemas are created, renamed, and deleted
     default: 01f1cd7c4bcf128daaacdfe8894b0f64
@@ -131,7 +131,7 @@ resources:
   postgres_projects:
     lakebase:
       project_id: ${var.lakebase_project_id}
-      display_name: OCR Schemas
+      display_name: Vision Flow Schemas
       pg_version: 17
       enable_pg_native_login: true
       default_endpoint_settings:
@@ -168,8 +168,8 @@ resources:
         prevent_destroy: true
   apps:
     app:
-      name: dynamic-ocr
-      description: Create reusable OCR schemas, scan images, and query nested Delta results with Genie
+      name: vision-flow
+      description: Generate dynamic vision prompts, ingest structured image data, and query results with Genie
       source_code_path: ./
       lifecycle:
         started: ${var.app_started}
@@ -214,7 +214,7 @@ resources:
             permission: CAN_USE
   pipelines:
     ocr_pipeline:
-      name: dynamic_ocr
+      name: vision_flow
       catalog: ${var.catalog}
       schema: ${var.schema}
       serverless: true

@@ -32,7 +32,7 @@ import { deletePrompt, getCategory, getSchemaVersion, listCategories } from './r
 
 const ALLOWED_EMAIL_DOMAINS = ['@databricks.com', '@gulfinc.com'];
 const TUNNEL_ENABLED = Boolean(process.env.TUNNEL_PUBLIC_DOMAIN);
-const logger = log.logger('dynamic-ocr');
+const logger = log.logger('vision-flow');
 const UuidSchema = z.string().uuid();
 const mastraPostgres = {
   host: config.pgHost,
@@ -45,10 +45,10 @@ const mastraPostgres = {
   idleTimeoutMillis: 30_000,
 };
 const ocrDataAssistant = agents.createAgent({
-  name: 'Dynamic OCR data assistant',
+  name: 'Vision Flow data assistant',
   description: 'Answers questions about schema-defined OCR results published to the curated Genie space.',
   instructions: [
-    'You answer questions about scans processed by the Dynamic OCR application.',
+    'You answer questions about scans processed by the Vision Flow application.',
     'Use the configured Genie tools for every question about scanned images, counts, nested fields, confidence, review status, or processing results.',
     'Use the OCR schema registry view to discover the correct payload field path before querying schema-specific values.',
     'Treat Genie and its generated SQL as the source of truth. Never invent rows, field values, scan outcomes, or processing status.',
@@ -102,7 +102,7 @@ await appkit.createApp({
           email(),
           authGate({
             allow: ALLOWED_EMAIL_DOMAINS,
-            brandName: 'Dynamic OCR',
+            brandName: 'Vision Flow',
             gatePaths: ['/'],
           }),
         ]
@@ -119,7 +119,7 @@ await appkit.createApp({
       agents: { ocr_data: ocrDataAssistant },
       defaultAgent: 'ocr_data',
       backgroundTurns: false,
-      storage: { id: 'dynamic-ocr-mastra', ...mastraPostgres, schemaName: 'mastra_instance' },
+      storage: { id: 'vision-flow-mastra', ...mastraPostgres, schemaName: 'mastra_instance' },
       memory: false,
       genieIdentity: config.mastraGenieIdentity,
       genieSpaces: {

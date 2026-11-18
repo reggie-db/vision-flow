@@ -91,5 +91,5 @@ Object.assign(process.env, {
   PGSSLMODE: 'require',
 });
 
-console.log(`Starting local OCR app with Databricks profile ${profile} and shared role ${roleName}.`);
+console.log(`Starting Vision Flow with Databricks profile ${profile} and shared role ${roleName}.`);
 await import('../server/server.ts');

@@ -25,8 +25,8 @@ function bundleVariable(name: string): string {
 }
 
 const rootProject = new projectJs.DBXToolsNodeProject({
-  name: "dynamic-ocr",
-  scope: "dynamic-ocr",
+  name: "vision-flow",
+  scope: "vision-flow",
   packageRoots: ["packages"],
   packageDefaults: { publishable: false },
   appkit: true,

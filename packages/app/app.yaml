@@ -13,17 +13,17 @@ env:
   - name: OCR_VOLUME_FULL_NAME
     value: reggie_pierce_aws_catalog.cstore_ops.ocr_source_images
   - name: OCR_LAKEBASE_PROJECT
-    value: projects/lottery-ocr
+    value: projects/vision-flow
   - name: OCR_LAKEBASE_BRANCH
-    value: projects/lottery-ocr/branches/production
+    value: projects/vision-flow/branches/production
   - name: OCR_LAKEBASE_ENDPOINT
-    value: projects/lottery-ocr/branches/production/endpoints/primary
+    value: projects/vision-flow/branches/production/endpoints/primary
   - name: OCR_LAKEBASE_DATABASE
-    value: lottery_ocr
+    value: vision_flow
   - name: OCR_LAKEBASE_ROLE
-    value: lottery_ocr_runtime
+    value: vision_flow_runtime
   - name: OCR_LAKEBASE_SECRET_SCOPE
-    value: lottery-ocr
+    value: vision-flow
   - name: OCR_LAKEBASE_USER_KEY
     value: lakebase-user
   - name: OCR_LAKEBASE_PASSWORD_KEY
@@ -49,7 +49,7 @@ env:
   - name: OCR_DASHBOARD_ID
     value: 01f1cd7c4bcf128daaacdfe8894b0f64
   - name: OCR_DASHBOARD_DISPLAY_NAME
-    value: OCR Analytics
+    value: Vision Flow Analytics
   - name: OCR_WORKSPACE_HOST
     value: https://fevm-reggie-pierce-aws.cloud.databricks.com
   - name: MASTRA_GENIE_IDENTITY
@@ -57,11 +57,11 @@ env:
   - name: OCR_REVIEW_THRESHOLD
     value: "0.8"
   - name: OCR_PG_USER
-    value: lottery_ocr_runtime
+    value: vision_flow_runtime
   - name: PGROLE
-    value: lottery_ocr_runtime
+    value: vision_flow_runtime
   - name: DBX_TOOLS_POSTGRES_ROLE
-    value: lottery_ocr_runtime
+    value: vision_flow_runtime
   - name: OCR_PG_PASSWORD
     valueFrom: lakebase-password
   - name: DATABRICKS_VOLUME_FILES

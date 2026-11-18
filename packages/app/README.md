@@ -1,6 +1,6 @@
-# Dynamic OCR
+# Vision Flow
 
-AppKit scanner and continuous Lakeflow pipeline for reusable, schema-defined image extraction. The default schema recognizes machine-generated sales images with jurisdiction, quantity sold, price, transaction date, and optional address and terminal ID. Users can create or reuse additional schemas, such as driver licenses or signed forms, from the selector.
+AppKit scanner and continuous Lakeflow pipeline for reusable, schema-defined image extraction. Vision Flow generates vision-model prompts from versioned JSON schemas so one ingestion flow can produce structured data from different image categories. The default schema recognizes machine-generated sales images with jurisdiction, quantity sold, price, transaction date, and optional address and terminal ID. Users can create or reuse additional schemas, such as driver licenses, store-layout audits, or signed forms, from the selector.
 
 ## Architecture
 
@@ -17,10 +17,10 @@ AppKit scanner and continuous Lakeflow pipeline for reusable, schema-defined ima
 ```bash
 bun run compile
 DATABRICKS_CONFIG_PROFILE=DEFAULT bun packages/app/scripts/local-start.ts
-portr http -s local-dynamic-ocr 8000
+portr http -s local-vision-flow 8000
 ```
 
-The local tunnel is `https://local-dynamic-ocr.apps.dbx.tools`.
+The local tunnel is `https://local-vision-flow.apps.dbx.tools`.
 
 ## Workspace setup
 

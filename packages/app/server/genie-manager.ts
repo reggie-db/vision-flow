@@ -99,14 +99,14 @@ async function updateSpace(includeEtag = true): Promise<void> {
   serialized.data_sources = { ...record(serialized.data_sources), tables: sources };
   serialized.instructions = {
     ...record(serialized.instructions),
-    text_instructions: [{ id: stableId('dynamic-ocr-instructions'), content: [instructions().join('\n\n')] }],
+    text_instructions: [{ id: stableId('vision-flow-instructions'), content: [instructions().join('\n\n')] }],
     join_specs: [],
   };
 
   await databricksJson(`/api/2.0/genie/spaces/${encodeURIComponent(config.genieSpaceId)}`, {
     method: 'PATCH',
     body: JSON.stringify({
-      title: 'OCR',
+      title: 'Vision Flow',
       description: 'Natural-language analysis of schema-defined OCR scans and processing metadata.',
       warehouse_id: config.genieWarehouseId,
       serialized_space: `${JSON.stringify(serialized, null, 2)}\n`,
@@ -117,7 +117,7 @@ async function updateSpace(includeEtag = true): Promise<void> {
 }
 
 export async function ensureOcrGenieSpace(): Promise<void> {
-  await withAdvisoryLock(database, ['dynamic-ocr', 'genie-space', config.genieSpaceId], async () => {
+  await withAdvisoryLock(database, ['vision-flow', 'genie-space', config.genieSpaceId], async () => {
     for (let attempt = 1; attempt <= 4; attempt += 1) {
       try {
         await updateSpace();

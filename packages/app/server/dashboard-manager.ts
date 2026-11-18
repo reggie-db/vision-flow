@@ -418,7 +418,7 @@ async function updateDashboard(dashboardId: string, serialized: string, includeE
 }
 
 export async function refreshOcrDashboard(): Promise<string> {
-  return withAdvisoryLock(database, ['dynamic-ocr', 'dashboard', config.dashboardDisplayName], async () => {
+  return withAdvisoryLock(database, ['vision-flow', 'dashboard', config.dashboardDisplayName], async () => {
     const categories = await listDashboardCategories();
     const { serialized, queries } = serializedDashboard(categories);
     for (const query of queries) await executeWarehouseSql(query);

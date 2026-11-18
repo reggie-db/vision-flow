@@ -133,8 +133,8 @@
             "patterns": [
               {
                 "group": [
-                  "@dynamic-ocr/app",
-                  "@dynamic-ocr/app/**"
+                  "@vision-flow/app",
+                  "@vision-flow/app/**"
                 ],
                 "message": "Use relative imports within this package."
               }

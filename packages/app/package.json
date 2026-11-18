@@ -1,8 +1,8 @@
 {
-  "name": "@dynamic-ocr/app",
+  "name": "@vision-flow/app",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/reggie-pierce_data/lottery-ocr.git",
+    "url": "git+https://github.com/reggie-db/vision-flow.git",
     "directory": "packages/app"
   },
   "scripts": {

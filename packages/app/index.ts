@@ -2,5 +2,5 @@
 // Regenerated from the exporting modules in ./src.
 // Hand edits are overwritten on the next generation; this file is read-only.
 
-export const PACKAGE_IDENTIFIER = "@dynamic-ocr/app";
+export const PACKAGE_IDENTIFIER = "@vision-flow/app";
 export const PACKAGE_VERSION = "0.0.1";

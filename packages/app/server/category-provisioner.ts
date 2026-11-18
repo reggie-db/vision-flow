@@ -124,7 +124,7 @@ async function provisionSpec(spec: ProvisionSpec, operationId?: string): Promise
   const extractionSchema = extractionJsonSchema(spec.contract);
 
   let created = false;
-  await withAdvisoryTransactionLock(database, ['dynamic-ocr', 'category-fingerprint', fingerprint], async (client) => {
+  await withAdvisoryTransactionLock(database, ['vision-flow', 'category-fingerprint', fingerprint], async (client) => {
     const metaSchema = config.metaSchema.replaceAll('"', '""');
     const duplicate = await client.query<{ category_id: string }>(
       `SELECT category_id FROM "${metaSchema}"."schema_versions" WHERE fingerprint = $1`,

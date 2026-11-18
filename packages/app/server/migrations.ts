@@ -2,7 +2,7 @@ import { quotePostgresIdentifier, withAdvisoryLock, withAdvisoryTransactionLock 
 import type { Pool } from 'pg';
 import { config } from './config.ts';
 
-const migrationLock = ['dynamic-ocr', 'schema-registry-migrations'];
+const migrationLock = ['vision-flow', 'schema-registry-migrations'];
 
 async function ensureVector(pool: Pool): Promise<void> {
   await withAdvisoryLock(pool, [...migrationLock, 'vector-extension'], async (client) => {
