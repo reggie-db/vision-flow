@@ -555,6 +555,25 @@
   font-size: 9px;
 }
 
+.system-flow .react-flow__edge.animated path {
+  stroke-dasharray: 7 5;
+  animation-duration: 1.15s;
+}
+
+.system-flow .react-flow__node {
+  cursor: grab;
+}
+
+.system-flow .react-flow__node.dragging {
+  cursor: grabbing;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .system-flow .react-flow__edge.animated path {
+    animation: none;
+  }
+}
+
 @media (max-width: 900px) {
   .operations-header {
     padding: 0 14px;

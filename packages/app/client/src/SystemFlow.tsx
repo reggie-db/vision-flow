@@ -1,4 +1,13 @@
-import { Background, BackgroundVariant, Controls, MarkerType, ReactFlow, type Edge, type Node } from '@xyflow/react';
+import {
+  Background,
+  BackgroundVariant,
+  Controls,
+  MarkerType,
+  ReactFlow,
+  useNodesState,
+  type Edge,
+  type Node,
+} from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 
 function label(title: string, detail: string) {
@@ -10,7 +19,7 @@ function label(title: string, detail: string) {
   );
 }
 
-const nodes: Node[] = [
+const initialNodes: Node[] = [
   {
     id: 'mobile',
     type: 'input',
@@ -79,21 +88,72 @@ const nodes: Node[] = [
 const arrow = { type: MarkerType.ArrowClosed };
 
 const edges: Edge[] = [
-  { id: 'mobile-app', source: 'mobile', target: 'app', label: 'image + schema', markerEnd: arrow },
-  { id: 'postgres-app', source: 'postgres', target: 'app', label: 'active contract', markerEnd: arrow },
-  { id: 'app-postgres', source: 'app', target: 'postgres', label: 'prompts + events', markerEnd: arrow },
-  { id: 'app-quick', source: 'app', target: 'quick-model', label: 'validate', markerEnd: arrow },
-  { id: 'quick-volume', source: 'quick-model', target: 'volume', label: 'accepted image', markerEnd: arrow },
-  { id: 'volume-pipeline', source: 'volume', target: 'pipeline', label: 'new file', markerEnd: arrow },
-  { id: 'postgres-pipeline', source: 'postgres', target: 'pipeline', label: 'schema registry', markerEnd: arrow },
-  { id: 'pipeline-model', source: 'pipeline', target: 'strong-model', label: 'image + contract', markerEnd: arrow },
-  { id: 'model-delta', source: 'strong-model', target: 'delta', label: 'typed payload', markerEnd: arrow },
-  { id: 'delta-dashboard', source: 'delta', target: 'dashboard', label: 'SQL', markerEnd: arrow },
-  { id: 'delta-assistant', source: 'delta', target: 'assistant', label: 'Genie queries', markerEnd: arrow },
-  { id: 'postgres-assistant', source: 'postgres', target: 'assistant', label: 'threads + context', markerEnd: arrow },
+  { id: 'mobile-app', source: 'mobile', target: 'app', label: 'image + schema', markerEnd: arrow, animated: true },
+  { id: 'postgres-app', source: 'postgres', target: 'app', label: 'active contract', markerEnd: arrow, animated: true },
+  {
+    id: 'app-postgres',
+    source: 'app',
+    target: 'postgres',
+    label: 'prompts + events',
+    markerEnd: arrow,
+    animated: true,
+  },
+  { id: 'app-quick', source: 'app', target: 'quick-model', label: 'validate', markerEnd: arrow, animated: true },
+  {
+    id: 'quick-volume',
+    source: 'quick-model',
+    target: 'volume',
+    label: 'accepted image',
+    markerEnd: arrow,
+    animated: true,
+  },
+  { id: 'volume-pipeline', source: 'volume', target: 'pipeline', label: 'new file', markerEnd: arrow, animated: true },
+  {
+    id: 'postgres-pipeline',
+    source: 'postgres',
+    target: 'pipeline',
+    label: 'schema registry',
+    markerEnd: arrow,
+    animated: true,
+  },
+  {
+    id: 'pipeline-model',
+    source: 'pipeline',
+    target: 'strong-model',
+    label: 'image + contract',
+    markerEnd: arrow,
+    animated: true,
+  },
+  {
+    id: 'model-delta',
+    source: 'strong-model',
+    target: 'delta',
+    label: 'typed payload',
+    markerEnd: arrow,
+    animated: true,
+  },
+  { id: 'delta-dashboard', source: 'delta', target: 'dashboard', label: 'SQL', markerEnd: arrow, animated: true },
+  {
+    id: 'delta-assistant',
+    source: 'delta',
+    target: 'assistant',
+    label: 'Genie queries',
+    markerEnd: arrow,
+    animated: true,
+  },
+  {
+    id: 'postgres-assistant',
+    source: 'postgres',
+    target: 'assistant',
+    label: 'threads + context',
+    markerEnd: arrow,
+    animated: true,
+  },
 ];
 
 export function SystemFlow() {
+  const [nodes, , onNodesChange] = useNodesState(initialNodes);
+
   return (
     <div className="system-flow" aria-label="Vision Flow system architecture">
       <ReactFlow
@@ -103,13 +163,14 @@ export function SystemFlow() {
         fitViewOptions={{ padding: 0.16 }}
         minZoom={0.45}
         maxZoom={1.5}
-        nodesDraggable={false}
+        onNodesChange={onNodesChange}
+        nodesDraggable
         nodesConnectable={false}
-        elementsSelectable={false}
+        elementsSelectable
         proOptions={{ hideAttribution: true }}
       >
         <Background variant={BackgroundVariant.Dots} gap={22} size={1} />
-        <Controls showInteractive={false} />
+        <Controls />
       </ReactFlow>
     </div>
   );
