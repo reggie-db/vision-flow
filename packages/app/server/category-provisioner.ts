@@ -3,6 +3,7 @@ import type { CaptureGuide, Category, CategoryContract } from '../shared/vision-
 import { config } from './config.ts';
 import { ensureCategoryDashboard, refreshVisionDashboard } from './dashboard-manager.ts';
 import { database } from './database.ts';
+import { DEMO_CATEGORY_SPECS } from './demo-schemas.ts';
 import { ensureVisionGenieSpace } from './genie-manager.ts';
 import { decideCategory, embedText } from './model-gateway.ts';
 import { appendOperationEvent, completeOperation, failOperation } from './operations.ts';
@@ -287,6 +288,21 @@ export async function ensureDefaultCategory(): Promise<Category> {
     contract: DEFAULT_CATEGORY_CONTRACT,
     prompt: 'Machine sales image with jurisdiction, quantity sold, price, date, and address when present.',
   });
+}
+
+export async function ensureDemoCategories(): Promise<Category[]> {
+  const ensured = [await ensureDefaultCategory()];
+  let categories = await listCategories();
+  for (const spec of DEMO_CATEGORY_SPECS) {
+    const existing = categories.find((category) => category.slug === spec.slug);
+    if (existing?.status === 'ready') {
+      ensured.push(existing);
+      continue;
+    }
+    ensured.push(await provisionSpec(spec));
+    categories = await listCategories();
+  }
+  return ensured;
 }
 
 export async function renameCategoryAndRefresh(

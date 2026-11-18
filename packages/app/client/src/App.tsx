@@ -25,7 +25,6 @@ import {
   Textarea,
 } from '@databricks/appkit-ui/react';
 import { BrandIcon } from '@dbx-tools/ui/branding/react';
-import { MastraAssistant } from '@dbx-tools/ui-mastra/react';
 import { BrowserRouter, Route, Routes } from 'react-router-dom';
 import { useEffect, useMemo, useRef, useState, type ChangeEvent, type PointerEvent as ReactPointerEvent } from 'react';
 import {
@@ -153,32 +152,7 @@ function MobileView() {
   return (
     <main className={actualDevice ? 'device-stage' : 'desktop-stage'}>
       <section className={actualDevice ? 'device-shell' : 'tablet-shell'}>
-        <MastraAssistant
-          className="vision-assistant-shell"
-          contentClassName="vision-assistant-content"
-          mode="overlay"
-          side="right"
-          resizable={false}
-          mobileBreakpoint={720}
-          title="Vision Flow data assistant"
-          header={false}
-          launcher={{ position: 'bottom-right', label: 'Open Vision Flow assistant' }}
-          panelClassName="vision-assistant-panel"
-          chat={{
-            agentId: 'vision_data',
-            enableThreads: true,
-            threadPlacement: 'top',
-            enableExport: true,
-            showModelPicker: false,
-            suggestions: [
-              'How many scans have been processed?',
-              'Which scans need review?',
-              'Which schemas are available and what fields do they extract?',
-            ],
-          }}
-        >
-          <ScannerExperience />
-        </MastraAssistant>
+        <ScannerExperience />
       </section>
     </main>
   );
@@ -686,6 +660,7 @@ function ScannerExperience() {
           ) : null}
           <SheetFooter className="danger-footer">
             <Button
+              className="destructive-action"
               variant="destructive"
               onClick={() => setDeleteOpen(true)}
               disabled={operationBusy || categories.length <= 1}

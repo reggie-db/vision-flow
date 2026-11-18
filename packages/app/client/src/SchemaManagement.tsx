@@ -338,6 +338,7 @@ export function SchemaManagement() {
                   Open dashboard
                 </Button>
                 <Button
+                  className="destructive-action"
                   variant="destructive"
                   onClick={() => setDeleteOpen(true)}
                   disabled={busy || categories.length <= 1}

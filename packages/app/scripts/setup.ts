@@ -187,7 +187,7 @@ Object.assign(process.env, {
   DATABRICKS_CONFIG_PROFILE: profile,
 });
 
-const [{ database }, { migrateRegistry }, { ensureDefaultCategory }, { ensureVisionStorage }, { ensureVisionGenieSpace }] = await Promise.all([
+const [{ database }, { migrateRegistry }, { ensureDemoCategories }, { ensureVisionStorage }, { ensureVisionGenieSpace }] = await Promise.all([
   import('../server/database.ts'),
   import('../server/migrations.ts'),
   import('../server/category-provisioner.ts'),
@@ -196,7 +196,7 @@ const [{ database }, { migrateRegistry }, { ensureDefaultCategory }, { ensureVis
 ]);
 await migrateRegistry(database);
 await ensureVisionStorage();
-const category = await ensureDefaultCategory();
+const categories = await ensureDemoCategories();
 await ensureVisionGenieSpace();
 await database.end();
-console.log(`Lakebase registry initialized; default category ${category.slug} is ${category.status}.`);
+console.log(`Lakebase registry initialized with ${categories.length} demo schemas.`);

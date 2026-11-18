@@ -1,6 +1,6 @@
 # Vision Flow
 
-AppKit scanner and continuous Lakeflow pipeline for reusable, schema-defined image extraction. Vision Flow generates vision-model prompts from versioned JSON schemas so one ingestion flow can produce structured data from different image categories. The default schema recognizes machine-generated sales images with jurisdiction, quantity sold, price, transaction date, and optional address and terminal ID. Users can create or reuse additional schemas, such as driver licenses, store-layout audits, or signed forms, from the selector.
+AppKit scanner and continuous Lakeflow pipeline for reusable, schema-defined image extraction. Vision Flow generates vision-model prompts from versioned JSON schemas so one ingestion flow can produce structured data from different image categories. The initial registry includes machine sales, lottery receipts, ID verification, store-layout audits, and room chair counts. Users can create or reuse additional schemas from the selector.
 
 ## Architecture
 
@@ -24,7 +24,7 @@ The local tunnel is `https://local-vision-flow.apps.dbx.tools`.
 
 ## Workspace setup
 
-The bundle variables in `databricks.yml` are the shared configuration source. Setup stores the shared Lakebase role and generated password in the configured secret scope, migrates the schema registry, creates the Delta results table, creates the federated schema view, removes legacy output tables, seeds the default schema, and updates Genie.
+The bundle variables in `databricks.yml` are the shared configuration source. Setup stores the shared Lakebase role and generated password in the configured secret scope, migrates the schema registry, creates the Delta results table, creates the federated schema view, removes legacy output tables, seeds the demo schemas, and updates Genie.
 
 ```bash
 DATABRICKS_CONFIG_PROFILE=DEFAULT bun packages/app/scripts/setup.ts secret

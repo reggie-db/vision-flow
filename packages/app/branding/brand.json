@@ -16,9 +16,9 @@
     "favicon": "/favicon.svg"
   },
   "colors": {
-    "primary": "#FF3621",
-    "primaryHover": "#E02E1B",
-    "accent": "#00875A",
+    "primary": "#1B3139",
+    "primaryHover": "#10252C",
+    "accent": "#FF3621",
     "foreground": "#1B3139",
     "background": "#FFFFFF",
     "surface": "#F9F7F4",

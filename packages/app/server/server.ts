@@ -19,7 +19,7 @@ import {
 import { ACTIVITY_TOPIC, activityBus, publishActivity } from './activity.ts';
 import {
   deleteCategoryAndRefresh,
-  ensureDefaultCategory,
+  ensureDemoCategories,
   provisionCategoryFromPrompt,
   renameCategoryAndRefresh,
 } from './category-provisioner.ts';
@@ -110,7 +110,7 @@ function recordActivity(
 }
 
 await migrateRegistry(database);
-await ensureDefaultCategory();
+await ensureDemoCategories();
 
 // branding/brand.json: also read by createApp, the auth gate, and email.
 const brand = await loadBrandContext();

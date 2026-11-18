@@ -24,7 +24,9 @@ Vision Flow uses a Databricks App for capture and schema management, Lakebase fo
 ## App surfaces
 
 - `/` is the operations workspace for the embedded AI/BI dashboard, schema management, live activity, and the React Flow system map. The dbx-tools assistant bubble opens Mastra and Genie chats in a right-side panel.
-- `/mobile` is the camera-first capture interface. Opening it and submitting images emits persisted activity through the dbx-tools Postgres topic bus so the operations workspace can replay recent events and follow new ones in real time.
+- `/mobile` is the focused camera capture interface. It does not include the data assistant. Opening it and submitting images emits persisted activity through the dbx-tools Postgres topic bus so the operations workspace can replay recent events and follow new ones in real time.
+
+The registry starts with schemas for machine sales, lottery receipts, ID verification, store-layout audits, and room chair counts. Their vertical, horizontal, and guide-free capture modes demonstrate how the same ingestion flow adapts to documents and scenes.
 
 ## Local development
 

@@ -72,6 +72,16 @@
   height: 32px;
 }
 
+.operations-mobile-button svg {
+  width: 20px;
+  height: 20px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
 .operations-tabs {
   display: grid !important;
   min-width: 0;
@@ -304,6 +314,14 @@
 .schema-create-grid > button {
   height: 40px;
   align-self: end;
+}
+
+.schema-create-grid > button:disabled,
+.schema-inline-control button:disabled {
+  border: 1px solid var(--brand-color-border);
+  color: var(--brand-color-muted);
+  background: var(--brand-color-surface);
+  opacity: 1;
 }
 
 .schema-detail-header,

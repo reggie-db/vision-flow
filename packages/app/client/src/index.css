@@ -20,11 +20,6 @@ body {
   margin: 0;
 }
 
-.vision-assistant-panel {
-  border-color: var(--brand-color-border) !important;
-  background: #fff !important;
-}
-
 :root {
   /* --radius: 0.625rem;
   --background: oklch(1 0 0);
