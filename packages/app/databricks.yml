@@ -94,7 +94,7 @@ variables:
     default: 30
   mastra_genie_identity:
     description: Databricks identity used by the Mastra assistant for model, Genie, and statement calls
-    default: service-principal
+    default: auto
   review_threshold:
     description: Self-assessed confidence threshold below which extraction needs review
     default: 0.80
@@ -175,6 +175,12 @@ resources:
       name: ${var.app_name}
       description: Generate dynamic vision prompts, ingest structured image data, and query results with Genie
       source_code_path: ./
+      user_api_scopes:
+        - ai-gateway
+        - files
+        - genie
+        - model-serving
+        - sql
       lifecycle:
         started: ${var.app_started}
       resources:
