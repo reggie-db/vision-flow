@@ -151,6 +151,11 @@
       "type": "runtime"
     },
     {
+      "name": "@xyflow/react",
+      "version": "12.10.0",
+      "type": "runtime"
+    },
+    {
       "name": "bun",
       "version": "1.4.2",
       "type": "runtime"

@@ -61,7 +61,7 @@ export const CategorySchema = z.object({
       prompt: z.string(),
       createdAt: z.string(),
       canonical: z.boolean(),
-    }),
+    })
   ),
 });
 
@@ -141,7 +141,29 @@ export const UploadResponseSchema = z.discriminatedUnion('status', [
   }),
 ]);
 
+export const ActivityMessageSchema = z.object({
+  id: z.string(),
+  topic: z.literal('activity'),
+  type: z.string().min(1),
+  metadata: z.record(z.string(), z.json()),
+  body: z
+    .object({
+      summary: z.string().min(1),
+    })
+    .catchall(z.json()),
+  publishedAt: z.string(),
+});
+
+export const MobileViewActivityRequestSchema = z.object({
+  path: z.string().min(1).max(500),
+  width: z.number().int().positive().max(20_000),
+  height: z.number().int().positive().max(20_000),
+  devicePixelRatio: z.number().positive().max(20),
+  displayMode: z.enum(['browser', 'standalone', 'fullscreen', 'minimal-ui']).optional(),
+});
+
 export type ArrayField = z.infer<typeof ArrayFieldSchema>;
+export type ActivityMessage = z.infer<typeof ActivityMessageSchema>;
 export type CaptureGuide = z.infer<typeof CaptureGuideSchema>;
 export type Category = z.infer<typeof CategorySchema>;
 export type CategoryContract = z.infer<typeof CategoryContractSchema>;

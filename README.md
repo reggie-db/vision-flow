@@ -21,6 +21,11 @@ The same ingestion flow can support different visual inputs without maintaining 
 
 Vision Flow uses a Databricks App for capture and schema management, Lakebase for the schema registry and processing metadata, a continuous Lakeflow pipeline for extraction, and Delta tables for results.
 
+## App surfaces
+
+- `/` is the operations workspace for the embedded AI/BI dashboard, schema management, live activity, and the React Flow system map. The dbx-tools assistant bubble opens Mastra and Genie chats in a right-side panel.
+- `/mobile` is the camera-first capture interface. Opening it and submitting images emits persisted activity through the dbx-tools Postgres topic bus so the operations workspace can replay recent events and follow new ones in real time.
+
 ## Local development
 
 Install dependencies and compile the workspace:

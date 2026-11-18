@@ -4,8 +4,10 @@ import { agents, genie, mastra } from '@dbx-tools/appkit-mastra';
 import { email } from '@dbx-tools/email';
 import { log, toError } from '@dbx-tools/shared-core';
 import { authGate } from '@dbx-tools/tunnel';
+import type { TopicMessage } from '@dbx-tools/postgres';
 import { z } from 'zod';
 import {
+  MobileViewActivityRequestSchema,
   CategoryDeleteRequestSchema,
   CategoryRenameRequestSchema,
   CategoryResolveRequestSchema,
@@ -14,6 +16,7 @@ import {
   type OperationEvent,
   type UploadResponse,
 } from '../shared/vision-contracts.ts';
+import { ACTIVITY_TOPIC, activityBus, publishActivity } from './activity.ts';
 import {
   deleteCategoryAndRefresh,
   ensureDefaultCategory,
@@ -24,11 +27,7 @@ import { config } from './config.ts';
 import { database } from './database.ts';
 import { migrateRegistry } from './migrations.ts';
 import { quickImageGate } from './model-gateway.ts';
-import {
-  createOperation,
-  listOperationEvents,
-  subscribeOperation,
-} from './operations.ts';
+import { createOperation, listOperationEvents, subscribeOperation } from './operations.ts';
 import { deletePrompt, getCategory, getSchemaVersion, listCategories, setCategoryCaptureGuide } from './registry.ts';
 
 const ALLOWED_EMAIL_DOMAINS = ['@databricks.com', '@gulfinc.com'];
@@ -78,7 +77,12 @@ function decodeImageDataUrl(imageDataUrl: string): EncodedImage {
   };
 }
 
-function uploadPath(slug: string, schemaVersion: number, uploadId: string, extension: EncodedImage['extension']): string {
+function uploadPath(
+  slug: string,
+  schemaVersion: number,
+  uploadId: string,
+  extension: EncodedImage['extension']
+): string {
   const capturedAt = new Date();
   const datePath = [
     capturedAt.getUTCFullYear(),
@@ -92,6 +96,19 @@ function sendSse(response: { write(chunk: string): boolean }, event: OperationEv
   response.write(`id: ${event.sequence}\nevent: progress\ndata: ${JSON.stringify(event)}\n\n`);
 }
 
+function sendActivitySse(response: { write(chunk: string): boolean }, event: TopicMessage): void {
+  response.write(`id: ${event.id}\nevent: activity\ndata: ${JSON.stringify(event)}\n\n`);
+}
+
+function recordActivity(
+  type: string,
+  body: { summary: string; [key: string]: string | number | boolean | null }
+): void {
+  void publishActivity(type, body).catch((error) => {
+    logger.error('activity publish failed', { error: toError(error), type });
+  });
+}
+
 await migrateRegistry(database);
 await ensureDefaultCategory();
 
@@ -99,6 +116,12 @@ await ensureDefaultCategory();
 const brand = await loadBrandContext();
 
 await appkit.createApp({
+  interceptor(context) {
+    context.onLifecycle('shutdown', async () => {
+      await activityBus.close();
+      await database.end();
+    });
+  },
   plugins: [
     server({ bodyLimit: '11mb', staticPath: 'client/dist' }),
     ...(TUNNEL_ENABLED
@@ -154,6 +177,73 @@ await appkit.createApp({
         response.json({ user, executionIdentity: config.mastraGenieIdentity });
       });
 
+      http.post('/api/activity/mobile-open', async (request, response) => {
+        const parsed = MobileViewActivityRequestSchema.safeParse(request.body);
+        if (!parsed.success) {
+          response.status(400).json({ error: 'Valid mobile viewport details are required.' });
+          return;
+        }
+        const event = await publishActivity('mobile.view.opened', {
+          summary: 'Mobile capture view opened',
+          ...parsed.data,
+        });
+        response.status(202).json({ event });
+      });
+
+      http.get('/api/activity/events', async (request, response) => {
+        response.status(200);
+        response.setHeader('Content-Type', 'text/event-stream');
+        response.setHeader('Cache-Control', 'no-cache, no-transform');
+        response.setHeader('Connection', 'keep-alive');
+        response.flushHeaders();
+
+        let closed = false;
+        let replaying = true;
+        const delivered = new Set<string>();
+        const pending: TopicMessage[] = [];
+        const send = (event: TopicMessage) => {
+          if (closed || delivered.has(event.id)) return;
+          delivered.add(event.id);
+          sendActivitySse(response, event);
+        };
+
+        const unsubscribe = await activityBus.listen(ACTIVITY_TOPIC, (event) => {
+          if (replaying) pending.push(event);
+          else send(event);
+        });
+        const heartbeat = setInterval(() => {
+          if (!closed) response.write(': keepalive\n\n');
+        }, 15_000);
+        request.on('close', () => {
+          closed = true;
+          clearInterval(heartbeat);
+          void unsubscribe();
+        });
+
+        try {
+          const retained: TopicMessage[] = [];
+          let cursor: string | undefined;
+          let pages = 0;
+          do {
+            const page = await activityBus.history(ACTIVITY_TOPIC, { after: cursor, limit: 100 });
+            retained.push(...page.messages.map(({ message }) => message));
+            cursor = page.nextCursor;
+            pages += 1;
+          } while (cursor && pages < 20 && !closed);
+          for (const event of retained.slice(-100)) send(event);
+          replaying = false;
+          for (const event of pending) send(event);
+        } catch (error) {
+          logger.error('activity replay failed', { error: toError(error) });
+          if (!closed) {
+            response.write(
+              `event: activity-error\ndata: ${JSON.stringify({ error: 'Activity history could not be loaded.' })}\n\n`
+            );
+          }
+          replaying = false;
+        }
+      });
+
       http.get('/api/categories', async (_request, response) => {
         response.json({ categories: await listCategories() });
       });
@@ -166,11 +256,16 @@ await appkit.createApp({
         }
         const operation = await createOperation(parsed.data.prompt, parsed.data.idempotencyKey);
         if (operation.created) {
+          recordActivity('schema.create.requested', {
+            summary: `Schema creation requested${parsed.data.displayName ? ` for ${parsed.data.displayName}` : ''}`,
+            operationId: operation.id,
+            captureGuide: parsed.data.captureGuide ?? 'auto',
+          });
           void provisionCategoryFromPrompt(
             operation.id,
             parsed.data.prompt,
             parsed.data.displayName,
-            parsed.data.captureGuide,
+            parsed.data.captureGuide
           ).catch((error) => {
             logger.error('category provisioning failed', { error: toError(error), operationId: operation.id });
           });
@@ -187,9 +282,14 @@ await appkit.createApp({
         }
         const operation = createOperation(
           `Rename schema ${categoryId.data}`,
-          `rename:${categoryId.data}:${parsed.data.idempotencyKey}`,
+          `rename:${categoryId.data}:${parsed.data.idempotencyKey}`
         );
         if (operation.created) {
+          recordActivity('schema.rename.requested', {
+            summary: `Schema rename requested for ${parsed.data.displayName}`,
+            categoryId: categoryId.data,
+            operationId: operation.id,
+          });
           void renameCategoryAndRefresh(operation.id, categoryId.data, parsed.data.displayName).catch((error) => {
             logger.error('category rename failed', { error: toError(error), operationId: operation.id });
           });
@@ -209,6 +309,11 @@ await appkit.createApp({
           return;
         }
         const category = await getCategory(categoryId.data);
+        recordActivity('schema.capture-guide.updated', {
+          summary: `Capture guide changed to ${parsed.data.captureGuide}`,
+          categoryId: categoryId.data,
+          captureGuide: parsed.data.captureGuide,
+        });
         response.json({ category });
       });
 
@@ -221,9 +326,14 @@ await appkit.createApp({
         }
         const operation = createOperation(
           `Delete schema ${categoryId.data}`,
-          `delete:${categoryId.data}:${parsed.data.idempotencyKey}`,
+          `delete:${categoryId.data}:${parsed.data.idempotencyKey}`
         );
         if (operation.created) {
+          recordActivity('schema.delete.requested', {
+            summary: 'Schema deletion requested',
+            categoryId: categoryId.data,
+            operationId: operation.id,
+          });
           void deleteCategoryAndRefresh(operation.id, categoryId.data).catch((error) => {
             logger.error('category deletion failed', { error: toError(error), operationId: operation.id });
           });
@@ -274,6 +384,13 @@ await appkit.createApp({
           return;
         }
         const deleted = await deletePrompt(categoryId.data, promptId.data);
+        if (deleted) {
+          recordActivity('schema.prompt.deleted', {
+            summary: 'Schema prompt deleted',
+            categoryId: categoryId.data,
+            promptId: promptId.data,
+          });
+        }
         response.status(deleted ? 204 : 404).end();
       });
 
@@ -301,10 +418,16 @@ await appkit.createApp({
             parsed.data.quickImageDataUrl ?? parsed.data.imageDataUrl,
             category.displayName,
             category.description,
-            schema.contract,
+            schema.contract
           );
           if (!gate.valid) {
             const result: UploadResponse = { status: 'rejected', gate };
+            recordActivity('image.rejected', {
+              summary: `Image rejected for ${category.displayName}`,
+              categoryId: category.id,
+              categoryName: category.displayName,
+              reason: gate.reason,
+            });
             response.json(result);
             return;
           }
@@ -314,9 +437,20 @@ await appkit.createApp({
           const storedPath = uploadPath(category.slug, schemaVersion, uploadId, image.extension);
           await app.files('files').upload(storedPath, image.contents, { overwrite: false });
           const result: UploadResponse = { status: 'queued', uploadId, storedPath, gate };
+          recordActivity('image.queued', {
+            summary: `Image queued for ${category.displayName}`,
+            categoryId: category.id,
+            categoryName: category.displayName,
+            uploadId,
+            storedPath,
+          });
           response.status(202).json(result);
         } catch (error) {
           logger.error('image validation failed', { error: toError(error) });
+          recordActivity('image.failed', {
+            summary: 'Image validation or queueing failed',
+            categoryId: categoryId.data,
+          });
           response.status(502).json({ error: 'The image could not be checked and queued. Try again.' });
         }
       });

@@ -25,15 +25,9 @@ import {
   Textarea,
 } from '@databricks/appkit-ui/react';
 import { BrandIcon } from '@dbx-tools/ui/branding/react';
-import { MastraAssistant, useMastraAssistant } from '@dbx-tools/ui-mastra/react';
-import {
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-  type ChangeEvent,
-  type PointerEvent as ReactPointerEvent,
-} from 'react';
+import { MastraAssistant } from '@dbx-tools/ui-mastra/react';
+import { BrowserRouter, Route, Routes } from 'react-router-dom';
+import { useEffect, useMemo, useRef, useState, type ChangeEvent, type PointerEvent as ReactPointerEvent } from 'react';
 import {
   CaptureGuideSchema,
   CategorySchema,
@@ -46,6 +40,7 @@ import {
   type UploadResponse,
 } from '../../shared/vision-contracts.ts';
 import { useDocumentCamera } from './hooks/use-document-camera.ts';
+import { OperationsView } from './OperationsView.tsx';
 
 type ScanState = 'scanning' | 'submitting' | 'queued' | 'rejected' | 'error';
 type OperationKind = 'create' | 'rename' | 'delete';
@@ -76,7 +71,7 @@ async function fetchCategories(): Promise<Category[]> {
 async function uploadImage(
   category: Category,
   imageDataUrl: string,
-  quickImageDataUrl: string,
+  quickImageDataUrl: string
 ): Promise<UploadResponse> {
   const response = await fetch(`/api/categories/${category.id}/uploads`, {
     method: 'POST',
@@ -121,7 +116,39 @@ function quickPreview(imageDataUrl: string): Promise<string> {
 }
 
 export default function App() {
+  return (
+    <BrowserRouter>
+      <Routes>
+        <Route path="/mobile" element={<MobileView />} />
+        <Route path="*" element={<OperationsView />} />
+      </Routes>
+    </BrowserRouter>
+  );
+}
+
+function MobileView() {
   const actualDevice = isActualDevice();
+  const openReported = useRef(false);
+
+  useEffect(() => {
+    if (openReported.current) return;
+    openReported.current = true;
+    const displayMode = (['standalone', 'fullscreen', 'minimal-ui'] as const).find(
+      (mode) => window.matchMedia(`(display-mode: ${mode})`).matches
+    );
+    void fetch('/api/activity/mobile-open', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      keepalive: true,
+      body: JSON.stringify({
+        path: window.location.pathname,
+        width: window.innerWidth,
+        height: window.innerHeight,
+        devicePixelRatio: window.devicePixelRatio,
+        displayMode: displayMode ?? 'browser',
+      }),
+    }).catch(() => undefined);
+  }, []);
 
   return (
     <main className={actualDevice ? 'device-stage' : 'desktop-stage'}>
@@ -135,7 +162,7 @@ export default function App() {
           mobileBreakpoint={720}
           title="Vision Flow data assistant"
           header={false}
-          launcher={false}
+          launcher={{ position: 'bottom-right', label: 'Open Vision Flow assistant' }}
           panelClassName="vision-assistant-panel"
           chat={{
             agentId: 'vision_data',
@@ -158,7 +185,6 @@ export default function App() {
 }
 
 function ScannerExperience() {
-  const assistant = useMastraAssistant();
   const videoRef = useRef<HTMLVideoElement>(null);
   const imageInputRef = useRef<HTMLInputElement>(null);
   const [portalContainer, setPortalContainer] = useState<HTMLElement | null>(null);
@@ -181,7 +207,7 @@ function ScannerExperience() {
   const [focusPoint, setFocusPoint] = useState<{ id: number; x: number; y: number } | null>(null);
   const selectedCategory = useMemo(
     () => categories.find((category) => category.id === selectedCategoryId) ?? categories[0],
-    [categories, selectedCategoryId],
+    [categories, selectedCategoryId]
   );
   const captureGuide = selectedCategory?.captureGuide ?? 'vertical';
   const { analysis, cameraError, cameraReady, captureImage, mirrorPreview, nativePreview, refocusAt } =
@@ -286,7 +312,7 @@ function ScannerExperience() {
     path: string,
     method: 'POST' | 'PATCH' | 'DELETE',
     body: Record<string, unknown>,
-    onReady: (event: OperationEvent) => void,
+    onReady: (event: OperationEvent) => void
   ) => {
     setOperationKind(kind);
     setOperationEvents([]);
@@ -333,7 +359,7 @@ function ScannerExperience() {
         setNewCaptureGuide('auto');
         setCreateOpen(false);
         void loadCategories(event.categoryId);
-      },
+      }
     );
   };
 
@@ -344,7 +370,7 @@ function ScannerExperience() {
       `/api/categories/${selectedCategory.id}`,
       'PATCH',
       { displayName: renameValue.trim(), idempotencyKey: crypto.randomUUID() },
-      () => void loadCategories(selectedCategory.id),
+      () => void loadCategories(selectedCategory.id)
     );
   };
 
@@ -359,14 +385,15 @@ function ScannerExperience() {
       () => {
         setSettingsOpen(false);
         void loadCategories();
-      },
+      }
     );
   };
 
   const removePrompt = async (categoryId: string, promptId: string) => {
     try {
       const response = await fetch(`/api/categories/${categoryId}/prompts/${promptId}`, { method: 'DELETE' });
-      if (!response.ok && response.status !== 404) throw await responseError(response, 'The prompt could not be removed.');
+      if (!response.ok && response.status !== 404)
+        throw await responseError(response, 'The prompt could not be removed.');
       await loadCategories(categoryId);
     } catch (error) {
       setCategoriesError(error instanceof Error ? error.message : 'The prompt could not be removed.');
@@ -418,154 +445,142 @@ function ScannerExperience() {
       <div ref={setPortalContainer} className="scanner">
         <ResourceStatusIndicator position="top-center" />
         <header className="app-bar">
-            <BrandIcon className="app-bar-mark" mode="dark" alt="Vision Flow" />
-            <Select
-              value={selectedCategory?.id ?? ''}
-              onValueChange={(value) => {
-                setSelectedCategoryId(value);
-                reset();
-              }}
-              disabled={categories.length === 0}
-            >
-              <SelectTrigger className="schema-select-trigger" aria-label="Current schema">
-                <SelectValue placeholder="Choose schema" />
-              </SelectTrigger>
-              <SelectContent className="schema-select-content">
-                {categories.map((category) => (
-                  <SelectItem key={category.id} value={category.id}>
-                    {uiCopy(category.displayName)}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <Button
-              className="settings-button"
-              variant="secondary"
-              size="icon"
-              onClick={() => setSettingsOpen(true)}
-              disabled={!selectedCategory}
-              aria-label="Schema settings"
-            >
-              <svg viewBox="0 0 24 24" aria-hidden="true">
-                <path d="M12 15.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7Z" />
-                <path d="M19.4 15a1.7 1.7 0 0 0 .3 1.9l.1.1-2.8 2.8-.1-.1a1.7 1.7 0 0 0-1.9-.3 1.7 1.7 0 0 0-1 1.5V21h-4v-.1a1.7 1.7 0 0 0-1-1.5 1.7 1.7 0 0 0-1.9.3l-.1.1L4.2 17l.1-.1a1.7 1.7 0 0 0 .3-1.9A1.7 1.7 0 0 0 3.1 14H3v-4h.1a1.7 1.7 0 0 0 1.5-1 1.7 1.7 0 0 0-.3-1.9L4.2 7 7 4.2l.1.1A1.7 1.7 0 0 0 9 4.6a1.7 1.7 0 0 0 1-1.5V3h4v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.9-.3l.1-.1L19.8 7l-.1.1a1.7 1.7 0 0 0-.3 1.9 1.7 1.7 0 0 0 1.5 1h.1v4h-.1a1.7 1.7 0 0 0-1.5 1Z" />
-              </svg>
-            </Button>
-          </header>
+          <BrandIcon className="app-bar-mark" mode="dark" alt="Vision Flow" />
+          <Select
+            value={selectedCategory?.id ?? ''}
+            onValueChange={(value) => {
+              setSelectedCategoryId(value);
+              reset();
+            }}
+            disabled={categories.length === 0}
+          >
+            <SelectTrigger className="schema-select-trigger" aria-label="Current schema">
+              <SelectValue placeholder="Choose schema" />
+            </SelectTrigger>
+            <SelectContent className="schema-select-content">
+              {categories.map((category) => (
+                <SelectItem key={category.id} value={category.id}>
+                  {uiCopy(category.displayName)}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <Button
+            className="settings-button"
+            variant="secondary"
+            size="icon"
+            onClick={() => setSettingsOpen(true)}
+            disabled={!selectedCategory}
+            aria-label="Schema settings"
+          >
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M12 15.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7Z" />
+              <path d="M19.4 15a1.7 1.7 0 0 0 .3 1.9l.1.1-2.8 2.8-.1-.1a1.7 1.7 0 0 0-1.9-.3 1.7 1.7 0 0 0-1 1.5V21h-4v-.1a1.7 1.7 0 0 0-1-1.5 1.7 1.7 0 0 0-1.9.3l-.1.1L4.2 17l.1-.1a1.7 1.7 0 0 0 .3-1.9A1.7 1.7 0 0 0 3.1 14H3v-4h.1a1.7 1.7 0 0 0 1.5-1 1.7 1.7 0 0 0-.3-1.9L4.2 7 7 4.2l.1.1A1.7 1.7 0 0 0 9 4.6a1.7 1.7 0 0 0 1-1.5V3h4v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.9-.3l.1-.1L19.8 7l-.1.1a1.7 1.7 0 0 0-.3 1.9 1.7 1.7 0 0 0 1.5 1h.1v4h-.1a1.7 1.7 0 0 0-1.5 1Z" />
+            </svg>
+          </Button>
+        </header>
 
-          {categoriesError ? <div className="inline-error">{categoriesError}</div> : null}
+        {categoriesError ? <div className="inline-error">{categoriesError}</div> : null}
 
-          <div className="camera-view" onPointerDown={handleRefocus}>
-            {nativePreview ? (
-              <div className="native-preview" aria-hidden="true" />
-            ) : (
-              <video
-                ref={videoRef}
-                className={mirrorPreview ? 'mirrored' : undefined}
-                autoPlay
-                muted
-                playsInline
-                aria-hidden="true"
-              />
-            )}
+        <div className="camera-view" onPointerDown={handleRefocus}>
+          {nativePreview ? (
+            <div className="native-preview" aria-hidden="true" />
+          ) : (
+            <video
+              ref={videoRef}
+              className={mirrorPreview ? 'mirrored' : undefined}
+              autoPlay
+              muted
+              playsInline
+              aria-hidden="true"
+            />
+          )}
 
-            {scanState === 'submitting' ? (
-              <div className="checking-layer" role="status" aria-live="polite">
-                <span className="checking-spinner" aria-hidden="true" />
-                <strong>Checking image</strong>
-              </div>
-            ) : scanState === 'scanning' ? (
-              <>
-                {captureGuide === 'none' ? null : (
-                  <div
-                    className={`focus-box ${captureGuide} ${guideState}`}
-                    style={{
-                      left: `${analysis.bounds.x * 100}%`,
-                      top: `${analysis.bounds.y * 100}%`,
-                      width: `${analysis.bounds.width * 100}%`,
-                      height: `${analysis.bounds.height * 100}%`,
-                    }}
-                    aria-hidden="true"
-                  />
-                )}
-                {focusPoint ? (
-                  <span
-                    key={focusPoint.id}
-                    className="tap-focus"
-                    style={{ left: `${focusPoint.x * 100}%`, top: `${focusPoint.y * 100}%` }}
-                    aria-hidden="true"
-                  />
-                ) : null}
-                <Button
-                  className="capture-button"
-                  onClick={() => void capture()}
-                  disabled={!selectedCategory}
-                  aria-label={`Capture ${uiCopy(selectedCategory?.displayName ?? 'image')}`}
-                >
-                  <span aria-hidden="true" />
-                </Button>
-                <Button
-                  className="upload-button"
-                  onClick={() => imageInputRef.current?.click()}
-                  disabled={!selectedCategory}
-                  aria-label="Upload image"
-                >
-                  <svg viewBox="0 0 24 24" aria-hidden="true">
-                    <path d="M12 16V4m0 0L7.5 8.5M12 4l4.5 4.5M5 14v4a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-4" />
-                  </svg>
-                </Button>
-                {!assistant.isOpen ? (
-                  <Button
-                    className="assistant-button"
-                    onClick={() => assistant.open()}
-                    aria-label="Ask Vision Flow data assistant"
-                  >
-                    <svg viewBox="0 0 24 24" aria-hidden="true">
-                      <path d="M8 9h8M8 13h5" />
-                      <path d="M19 4H5a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h3l4 3 4-3h3a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2Z" />
-                    </svg>
-                  </Button>
-                ) : null}
-                <input
-                  ref={imageInputRef}
-                  className="image-upload-input"
-                  type="file"
-                  accept="image/*"
-                  onChange={(event) => void handleImageUpload(event)}
-                  tabIndex={-1}
+          {scanState === 'submitting' ? (
+            <div className="checking-layer" role="status" aria-live="polite">
+              <span className="checking-spinner" aria-hidden="true" />
+              <strong>Checking image</strong>
+            </div>
+          ) : scanState === 'scanning' ? (
+            <>
+              {captureGuide === 'none' ? null : (
+                <div
+                  className={`focus-box ${captureGuide} ${guideState}`}
+                  style={{
+                    left: `${analysis.bounds.x * 100}%`,
+                    top: `${analysis.bounds.y * 100}%`,
+                    width: `${analysis.bounds.width * 100}%`,
+                    height: `${analysis.bounds.height * 100}%`,
+                  }}
                   aria-hidden="true"
                 />
-              </>
-            ) : (
-              <div className="result-layer">
-                <div className={`result-card ${scanState === 'queued' ? 'success' : 'failure'}`}>
-                  <span className="result-icon" aria-hidden="true">
-                    {scanState === 'queued' ? '✓' : '!'}
-                  </span>
-                  <h2>
-                    {scanState === 'queued'
-                      ? 'Queued for extraction'
-                      : scanState === 'rejected'
-                        ? 'Image failed validation'
-                        : 'Could not queue image'}
-                  </h2>
-                  <p>
-                    {scanState === 'queued'
-                      ? 'Extraction will continue in the pipeline.'
-                      : gate?.reason || errorMessage || 'Retake the image with the required fields visible.'}
-                  </p>
-                  {missingFieldLabels.length ? <p>Missing: {missingFieldLabels.join(', ')}</p> : null}
-                  <Button className="result-button" onClick={reset}>
-                    Scan another
-                  </Button>
-                </div>
+              )}
+              {focusPoint ? (
+                <span
+                  key={focusPoint.id}
+                  className="tap-focus"
+                  style={{ left: `${focusPoint.x * 100}%`, top: `${focusPoint.y * 100}%` }}
+                  aria-hidden="true"
+                />
+              ) : null}
+              <Button
+                className="capture-button"
+                onClick={() => void capture()}
+                disabled={!selectedCategory}
+                aria-label={`Capture ${uiCopy(selectedCategory?.displayName ?? 'image')}`}
+              >
+                <span aria-hidden="true" />
+              </Button>
+              <Button
+                className="upload-button"
+                onClick={() => imageInputRef.current?.click()}
+                disabled={!selectedCategory}
+                aria-label="Upload image"
+              >
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                  <path d="M12 16V4m0 0L7.5 8.5M12 4l4.5 4.5M5 14v4a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-4" />
+                </svg>
+              </Button>
+              <input
+                ref={imageInputRef}
+                className="image-upload-input"
+                type="file"
+                accept="image/*"
+                onChange={(event) => void handleImageUpload(event)}
+                tabIndex={-1}
+                aria-hidden="true"
+              />
+            </>
+          ) : (
+            <div className="result-layer">
+              <div className={`result-card ${scanState === 'queued' ? 'success' : 'failure'}`}>
+                <span className="result-icon" aria-hidden="true">
+                  {scanState === 'queued' ? '✓' : '!'}
+                </span>
+                <h2>
+                  {scanState === 'queued'
+                    ? 'Queued for extraction'
+                    : scanState === 'rejected'
+                      ? 'Image failed validation'
+                      : 'Could not queue image'}
+                </h2>
+                <p>
+                  {scanState === 'queued'
+                    ? 'Extraction will continue in the pipeline.'
+                    : gate?.reason || errorMessage || 'Retake the image with the required fields visible.'}
+                </p>
+                {missingFieldLabels.length ? <p>Missing: {missingFieldLabels.join(', ')}</p> : null}
+                <Button className="result-button" onClick={reset}>
+                  Scan another
+                </Button>
               </div>
-            )}
+            </div>
+          )}
 
-            <span className="sr-status" aria-live="polite">
-              {cameraError ?? (cameraReady ? 'Camera ready' : 'Starting camera')}
-            </span>
-          </div>
+          <span className="sr-status" aria-live="polite">
+            {cameraError ?? (cameraReady ? 'Camera ready' : 'Starting camera')}
+          </span>
+        </div>
       </div>
 
       <Sheet open={settingsOpen} onOpenChange={setSettingsOpen}>

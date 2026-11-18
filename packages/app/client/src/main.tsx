@@ -6,6 +6,7 @@ import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import './index.css';
 import './scanner.css';
+import './operations.css';
 import brandInput from '../../branding/brand.json';
 import App from './App.tsx';
 import { ErrorBoundary } from './ErrorBoundary.tsx';
