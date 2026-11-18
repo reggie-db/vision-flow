@@ -74,6 +74,19 @@
         }
       ]
     },
+    "bun-lockfile": {
+      "name": "bun-lockfile",
+      "description": "Rewrite private npm registry tarball URLs in bun.lock",
+      "steps": [
+        {
+          "execArgs": [
+            "bun",
+            "node_modules/@dbx-tools/projen/tasks/bun-lockfile.ts"
+          ],
+          "receiveArgs": true
+        }
+      ]
+    },
     "check": {
       "name": "check",
       "description": "Validate the generated workspace with Bun",
@@ -99,17 +112,13 @@
       "name": "clobber",
       "description": "hard resets to HEAD of origin and cleans the local repo",
       "env": {
-        "BRANCH": "$(git branch --show-current)"
+        "BRANCH": "$(git branch --show-current)",
+        "HEAD_COMMIT": "$(git rev-parse --short HEAD)"
       },
       "steps": [
         {
-          "execArgs": [
-            "git",
-            "checkout",
-            "-b",
-            "scratch"
-          ],
-          "name": "save current HEAD in \"scratch\" branch"
+          "exec": "git checkout -B \"scratch-$HEAD_COMMIT\"",
+          "name": "save current HEAD in a \"scratch-<commit>\" branch"
         },
         {
           "exec": "git checkout \"$BRANCH\""
@@ -135,7 +144,7 @@
           "name": "clean all untracked files"
         },
         {
-          "say": "ready to rock! (unpushed commits are under the \"scratch\" branch)"
+          "say": "ready to rock! (unpushed commits are under a \"scratch-<commit>\" branch)"
         }
       ],
       "condition": "git diff --exit-code > /dev/null"
@@ -146,9 +155,35 @@
       "steps": [
         {
           "execArgs": [
-            "bun",
-            "node_modules/@dbx-tools/projen/tasks/compile-workspace.ts"
+            "bunx",
+            "tsc",
+            "--build",
+            "tsconfig.json"
           ]
+        },
+        {
+          "execArgs": [
+            "bun",
+            "run",
+            "pre-compile"
+          ],
+          "cwd": "packages/app"
+        },
+        {
+          "execArgs": [
+            "bun",
+            "run",
+            "compile"
+          ],
+          "cwd": "packages/app"
+        },
+        {
+          "execArgs": [
+            "bun",
+            "run",
+            "post-compile"
+          ],
+          "cwd": "packages/app"
         }
       ]
     },
@@ -261,6 +296,9 @@
         },
         {
           "exec": "bun install"
+        },
+        {
+          "spawn": "bun-lockfile"
         }
       ]
     },
@@ -272,7 +310,7 @@
           "exec": "bun scripts/check-bun.ts"
         },
         {
-          "exec": "bun install"
+          "exec": "bun install --frozen-lockfile"
         }
       ]
     },
@@ -304,6 +342,7 @@
     },
     "sync": {
       "name": "sync",
+      "description": "Synthesize once or keep generated sources current with --watch",
       "steps": [
         {
           "execArgs": [
@@ -331,11 +370,10 @@
       "description": "Run all JavaScript, TypeScript, and Python tests",
       "steps": [
         {
-          "execArgs": [
-            "bun",
-            "node_modules/@dbx-tools/projen/tasks/test-workspace.ts",
-            "all"
-          ]
+          "spawn": "test:unit"
+        },
+        {
+          "spawn": "test:integration"
         }
       ]
     },
@@ -369,29 +407,11 @@
     },
     "test:integration": {
       "name": "test:integration",
-      "description": "Run integration and packed-consumer tests",
-      "steps": [
-        {
-          "execArgs": [
-            "bun",
-            "node_modules/@dbx-tools/projen/tasks/test-workspace.ts",
-            "integration"
-          ]
-        }
-      ]
+      "description": "Run integration and packed-consumer tests"
     },
     "test:unit": {
       "name": "test:unit",
-      "description": "Run unit tests in grouped root runners",
-      "steps": [
-        {
-          "execArgs": [
-            "bun",
-            "node_modules/@dbx-tools/projen/tasks/test-workspace.ts",
-            "unit"
-          ]
-        }
-      ]
+      "description": "Run unit tests in grouped root runners"
     },
     "workspace:graph": {
       "name": "workspace:graph",

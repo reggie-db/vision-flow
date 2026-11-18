@@ -10,6 +10,7 @@
     "appkit:typegen": "projen appkit:typegen",
     "barrels": "projen barrels",
     "build": "projen build",
+    "bun-lockfile": "projen bun-lockfile",
     "check": "projen check",
     "clean": "projen clean",
     "clobber": "projen clobber",
@@ -34,10 +35,11 @@
     "test:integration": "projen test:integration",
     "test:unit": "projen test:unit",
     "workspace:graph": "projen workspace:graph",
-    "projen": "projen"
+    "projen": "projen",
+    "postinstall": "bun node_modules/@dbx-tools/projen/tasks/bun-lockfile.ts"
   },
   "devDependencies": {
-    "@dbx-tools/projen": "^0.9.163",
+    "@dbx-tools/projen": "^0.9.210",
     "@types/bun": "1.4.2",
     "@types/node": "^24.6.0",
     "@typescript-eslint/eslint-plugin": "^8",
@@ -50,7 +52,7 @@
     "eslint-plugin-import": "^2.32.0",
     "eslint-plugin-prettier": "^5.5.7",
     "prettier": "^3.9.10",
-    "projen": "^0.103.27",
+    "projen": "^0.104.26",
     "typescript": "^5.9.3"
   },
   "overrides": {
