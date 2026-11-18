@@ -3,7 +3,7 @@
   "pages": [
     {
       "name": "overview",
-      "displayName": "OCR",
+      "displayName": "Vision Flow",
       "pageType": "PAGE_TYPE_CANVAS",
       "layoutVersion": "GRID_V1",
       "layout": [
@@ -11,7 +11,7 @@
           "widget": {
             "name": "title",
             "multilineTextboxSpec": {
-              "lines": ["## OCR"]
+              "lines": ["## Vision Flow"]
             }
           },
           "position": {

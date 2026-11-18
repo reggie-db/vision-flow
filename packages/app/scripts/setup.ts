@@ -135,7 +135,7 @@ try {
   const metaSchema = quotePostgresIdentifier(variable('meta_schema'));
   await adminPool.query(`CREATE SCHEMA IF NOT EXISTS ${metaSchema} AUTHORIZATION ${roleIdentifier}`);
   await adminPool.query(`ALTER SCHEMA ${metaSchema} OWNER TO ${roleIdentifier}`);
-  for (const schemaName of ['mastra_instance', 'mastra_ocr_data', 'mastra_ocr_memory']) {
+  for (const schemaName of ['mastra_instance', 'mastra_vision_data', 'mastra_vision_memory']) {
     await transferSchemaOwnership(adminPool, schemaName, roleName);
   }
 } finally {
@@ -144,33 +144,33 @@ try {
 console.log(`Updated shared Lakebase role ${roleName}.`);
 
 Object.assign(process.env, {
-  OCR_MODEL_SERVICE: variable('quick_model_service'),
-  OCR_DASHBOARD_MODEL_SERVICE: variable('dashboard_model_service'),
-  OCR_EMBEDDING_ENDPOINT: variable('embedding_endpoint'),
-  OCR_VOLUME_FULL_NAME: variable('documents_volume'),
-  OCR_LAKEBASE_PROJECT: project,
-  OCR_LAKEBASE_BRANCH: branch,
-  OCR_LAKEBASE_ENDPOINT: resolved.endpoint,
-  OCR_LAKEBASE_DATABASE: databaseName,
-  OCR_LAKEBASE_ROLE: roleName,
-  OCR_LAKEBASE_SECRET_SCOPE: secretScope,
-  OCR_LAKEBASE_USER_KEY: userKey,
-  OCR_LAKEBASE_PASSWORD_KEY: passwordKey,
-  OCR_LAKEBASE_CONNECTION: variable('lakebase_connection'),
-  OCR_GENIE_CATALOG: variable('genie_catalog'),
-  OCR_GENIE_SCHEMA: variable('genie_schema'),
-  OCR_META_SCHEMA: variable('meta_schema'),
-  OCR_DOCUMENTS_TABLE: variable('documents_table'),
-  OCR_SCHEMA_REGISTRY_VIEW: variable('schema_registry_view'),
-  OCR_GENIE_SPACE_ID: variable('genie_space_id'),
-  OCR_GENIE_WAREHOUSE_ID: variable('genie_warehouse_id'),
-  OCR_GENIE_MAX_TABLES: variable('genie_max_tables'),
-  OCR_DASHBOARD_DISPLAY_NAME: variable('dashboard_display_name'),
-  OCR_WORKSPACE_HOST: variable('workspace_host'),
+  VISION_FLOW_MODEL_SERVICE: variable('quick_model_service'),
+  VISION_FLOW_DASHBOARD_MODEL_SERVICE: variable('dashboard_model_service'),
+  VISION_FLOW_EMBEDDING_ENDPOINT: variable('embedding_endpoint'),
+  VISION_FLOW_VOLUME_FULL_NAME: variable('documents_volume'),
+  VISION_FLOW_LAKEBASE_PROJECT: project,
+  VISION_FLOW_LAKEBASE_BRANCH: branch,
+  VISION_FLOW_LAKEBASE_ENDPOINT: resolved.endpoint,
+  VISION_FLOW_LAKEBASE_DATABASE: databaseName,
+  VISION_FLOW_LAKEBASE_ROLE: roleName,
+  VISION_FLOW_LAKEBASE_SECRET_SCOPE: secretScope,
+  VISION_FLOW_LAKEBASE_USER_KEY: userKey,
+  VISION_FLOW_LAKEBASE_PASSWORD_KEY: passwordKey,
+  VISION_FLOW_LAKEBASE_CONNECTION: variable('lakebase_connection'),
+  VISION_FLOW_GENIE_CATALOG: variable('genie_catalog'),
+  VISION_FLOW_GENIE_SCHEMA: variable('genie_schema'),
+  VISION_FLOW_META_SCHEMA: variable('meta_schema'),
+  VISION_FLOW_DOCUMENTS_TABLE: variable('documents_table'),
+  VISION_FLOW_SCHEMA_REGISTRY_VIEW: variable('schema_registry_view'),
+  VISION_FLOW_GENIE_SPACE_ID: variable('genie_space_id'),
+  VISION_FLOW_GENIE_WAREHOUSE_ID: variable('genie_warehouse_id'),
+  VISION_FLOW_GENIE_MAX_TABLES: variable('genie_max_tables'),
+  VISION_FLOW_DASHBOARD_DISPLAY_NAME: variable('dashboard_display_name'),
+  VISION_FLOW_WORKSPACE_HOST: variable('workspace_host'),
   MASTRA_GENIE_IDENTITY: variable('mastra_genie_identity'),
-  OCR_REVIEW_THRESHOLD: variable('review_threshold'),
-  OCR_PG_USER: roleName,
-  OCR_PG_PASSWORD: runtimePassword,
+  VISION_FLOW_REVIEW_THRESHOLD: variable('review_threshold'),
+  VISION_FLOW_PG_USER: roleName,
+  VISION_FLOW_PG_PASSWORD: runtimePassword,
   PGROLE: roleName,
   DBX_TOOLS_POSTGRES_ROLE: roleName,
   PGHOST: resolved.host,
@@ -180,7 +180,7 @@ Object.assign(process.env, {
   DATABRICKS_CONFIG_PROFILE: profile,
 });
 
-const [{ database }, { migrateRegistry }, { ensureDefaultCategory }, { ensureOcrStorage }, { ensureOcrGenieSpace }] = await Promise.all([
+const [{ database }, { migrateRegistry }, { ensureDefaultCategory }, { ensureVisionStorage }, { ensureVisionGenieSpace }] = await Promise.all([
   import('../server/database.ts'),
   import('../server/migrations.ts'),
   import('../server/category-provisioner.ts'),
@@ -188,8 +188,8 @@ const [{ database }, { migrateRegistry }, { ensureDefaultCategory }, { ensureOcr
   import('../server/genie-manager.ts'),
 ]);
 await migrateRegistry(database);
-await ensureOcrStorage();
+await ensureVisionStorage();
 const category = await ensureDefaultCategory();
-await ensureOcrGenieSpace();
+await ensureVisionGenieSpace();
 await database.end();
 console.log(`Lakebase registry initialized; default category ${category.slug} is ${category.status}.`);

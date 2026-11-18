@@ -1,5 +1,5 @@
 import type { PoolClient } from 'pg';
-import type { Category, CategoryContract } from '../shared/ocr-contracts.ts';
+import type { Category, CategoryContract } from '../shared/vision-contracts.ts';
 import type { DashboardPagePlan } from './model-gateway.ts';
 import { database } from './database.ts';
 import { config } from './config.ts';

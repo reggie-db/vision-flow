@@ -41,7 +41,7 @@ import {
   type ImageGateResult,
   type OperationEvent,
   type UploadResponse,
-} from '../../shared/ocr-contracts.ts';
+} from '../../shared/vision-contracts.ts';
 import { useDocumentCamera } from './hooks/use-document-camera.ts';
 
 type ScanState = 'scanning' | 'submitting' | 'queued' | 'rejected' | 'error';
@@ -124,18 +124,18 @@ export default function App() {
     <main className={actualDevice ? 'device-stage' : 'desktop-stage'}>
       <section className={actualDevice ? 'device-shell' : 'tablet-shell'}>
         <MastraAssistant
-          className="ocr-assistant-shell"
-          contentClassName="ocr-assistant-content"
+          className="vision-assistant-shell"
+          contentClassName="vision-assistant-content"
           mode="overlay"
           side="right"
           resizable={false}
           mobileBreakpoint={720}
-          title="OCR data assistant"
+          title="Vision Flow data assistant"
           header={false}
           launcher={false}
-          panelClassName="ocr-assistant-panel"
+          panelClassName="vision-assistant-panel"
           chat={{
-            agentId: 'ocr_data',
+            agentId: 'vision_data',
             enableThreads: true,
             threadPlacement: 'top',
             enableExport: true,
@@ -477,7 +477,7 @@ function ScannerExperience() {
                   <Button
                     className="assistant-button"
                     onClick={() => assistant.open()}
-                    aria-label="Ask OCR data assistant"
+                    aria-label="Ask Vision Flow data assistant"
                   >
                     <svg viewBox="0 0 24 24" aria-hidden="true">
                       <path d="M8 9h8M8 13h5" />
@@ -531,7 +531,7 @@ function ScannerExperience() {
         <SheetContent side="bottom" className="schema-sheet settings-sheet">
           <SheetHeader>
             <SheetTitle>{uiCopy(selectedCategory?.displayName ?? 'Schema')}</SheetTitle>
-            <SheetDescription className="sr-only">Manage the current OCR schema.</SheetDescription>
+            <SheetDescription className="sr-only">Manage the current extraction schema.</SheetDescription>
           </SheetHeader>
           {selectedCategory ? (
             <div className="sheet-scroll">
@@ -626,7 +626,7 @@ function ScannerExperience() {
         <SheetContent side="bottom" className="schema-sheet create-sheet">
           <SheetHeader>
             <SheetTitle>New schema</SheetTitle>
-            <SheetDescription className="sr-only">Create a reusable OCR schema.</SheetDescription>
+            <SheetDescription className="sr-only">Create a reusable extraction schema.</SheetDescription>
           </SheetHeader>
           <div className="create-form">
             <Input

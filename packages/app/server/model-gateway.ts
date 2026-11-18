@@ -5,7 +5,7 @@ import {
   type CategoryContract,
   type ContractField,
   type ImageGateResult,
-} from '../shared/ocr-contracts.ts';
+} from '../shared/vision-contracts.ts';
 import { config } from './config.ts';
 import { databricksFetch } from './databricks-api.ts';
 import { extractionJsonSchema, requiredFieldNames } from './schema-contract.ts';
@@ -112,7 +112,7 @@ export async function embedText(text: string): Promise<number[]> {
 
 export async function decideCategory(prompt: string, candidates: CandidateCategory[]): Promise<CategoryDecision> {
   return structuredResponse(
-    'ocr_category_decision',
+    'vision_category_decision',
     CategoryDecisionSchema,
     [
       'Resolve the requested image extraction into an existing category or a new immutable extraction contract.',
@@ -120,7 +120,7 @@ export async function decideCategory(prompt: string, candidates: CandidateCatego
       'For both reuse and create, return the complete proposed contract so structural equality can be verified deterministically.',
       'Do not enlarge an existing category to absorb new semantic fields. Clarify when the request is ambiguous.',
       'For a new category, use lowercase snake_case identifiers and include useful fields. Every field must have a precise description.',
-      'For a new category, return a concise human-readable displayName in title case. Do not end it with Image, Document, OCR, Query, Schema, or Category. Keep internal identifiers in categorySlug only.',
+      'For a new category, return a concise human-readable displayName in title case. Do not end it with Image, Document, Query, Schema, or Category. Keep internal identifiers in categorySlug only.',
       'Images with repeated line items should use one array field whose itemFields describe each item.',
       `User request: ${prompt}`,
       `Candidates: ${JSON.stringify(candidates)}`,
@@ -135,7 +135,7 @@ export async function quickImageGate(
   contract: CategoryContract,
 ): Promise<ImageGateResult> {
   return structuredResponse(
-    'ocr_image_gate',
+    'vision_image_gate',
     ImageGateResultSchema,
     [
       `Decide whether this image is a valid ${displayName} image: ${description}.`,
@@ -176,10 +176,10 @@ export async function generateDashboardPagePlan(
   contract: CategoryContract,
 ): Promise<DashboardPagePlan> {
   return structuredResponse(
-    'ocr_dashboard_page_plan',
+    'vision_dashboard_page_plan',
     DashboardPagePlanSchema,
     [
-      'Design one useful analytics dashboard page for OCR results created with this schema.',
+      'Design one useful analytics dashboard page for structured extraction results created with this schema.',
       'Choose field identifiers only from the supplied scalar fields. Use null when no field is suitable.',
       'metricField should be numeric or currency. groupingField should be a low-cardinality string or boolean. dateField should be a date.',
       'detailFields should contain the most decision-useful scalar fields in display order.',

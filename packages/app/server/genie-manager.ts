@@ -56,7 +56,7 @@ function configuredSources(): JsonRecord[] {
       category_id: 'Lakebase category UUID.',
       display_name: 'Human-readable schema name used in the scanner and dashboard tabs.',
       slug: 'Stable schema category identifier.',
-      description: 'Human-readable purpose of the OCR schema.',
+      description: 'Human-readable purpose of the extraction schema.',
       status: 'Schema readiness state. This view contains active ready schemas.',
       active_schema_version: 'Current immutable schema version.',
       fingerprint: `SHA-256 schema identifier. Join to ${documents}.schema_id.`,
@@ -71,7 +71,7 @@ function instructions(): string[] {
   const documents = `${config.genieCatalog}.${config.genieSchema}.${config.documentsTable}`;
   const schemas = `${config.genieCatalog}.${config.genieSchema}.${config.schemaRegistryView}`;
   return [
-    `Use ${documents} for OCR results and ${schemas} for schema context.`,
+    `Use ${documents} for structured extraction results and ${schemas} for schema context.`,
     `Join ${documents}.schema_id = ${schemas}.fingerprint before interpreting schema-specific payload fields.`,
     "Filter processing_status = 'completed' for successful results. Filter needs_review = false when the user asks for trusted automated results.",
     'The payload column is VARIANT. Read a scalar with payload:fields.<field>.value, its confidence with payload:fields.<field>.confidence, and source support with payload:fields.<field>.evidence.',
@@ -91,7 +91,7 @@ async function updateSpace(includeEtag = true): Promise<void> {
   );
   const sources = configuredSources();
   if (sources.length > config.genieMaxTables) {
-    throw new Error(`OCR requires ${sources.length} Genie sources, above the configured limit of ${config.genieMaxTables}.`);
+    throw new Error(`Vision Flow requires ${sources.length} Genie sources, above the configured limit of ${config.genieMaxTables}.`);
   }
 
   const serialized = record(JSON.parse(space.serialized_space));
@@ -107,7 +107,7 @@ async function updateSpace(includeEtag = true): Promise<void> {
     method: 'PATCH',
     body: JSON.stringify({
       title: 'Vision Flow',
-      description: 'Natural-language analysis of schema-defined OCR scans and processing metadata.',
+      description: 'Natural-language analysis of schema-defined image extractions and processing metadata.',
       warehouse_id: config.genieWarehouseId,
       serialized_space: `${JSON.stringify(serialized, null, 2)}\n`,
       ...(includeEtag ? { etag: space.etag } : {}),
@@ -116,7 +116,7 @@ async function updateSpace(includeEtag = true): Promise<void> {
   });
 }
 
-export async function ensureOcrGenieSpace(): Promise<void> {
+export async function ensureVisionGenieSpace(): Promise<void> {
   await withAdvisoryLock(database, ['vision-flow', 'genie-space', config.genieSpaceId], async () => {
     for (let attempt = 1; attempt <= 4; attempt += 1) {
       try {

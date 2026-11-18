@@ -1,5 +1,5 @@
 import { createHash } from 'node:crypto';
-import type { ArrayField, CategoryContract, ContractField, ScalarField } from '../shared/ocr-contracts.ts';
+import type { ArrayField, CategoryContract, ContractField, ScalarField } from '../shared/vision-contracts.ts';
 
 export const DEFAULT_CATEGORY_SLUG = 'machine_sales_document';
 
@@ -76,10 +76,10 @@ export function humanReadableDisplayName(value: string): string {
     .trim()
     .replaceAll(/[_-]+/g, ' ')
     .replaceAll(/\s+/g, ' ')
-    .replace(/\s+(document|image|ocr|query)$/i, '')
+    .replace(/\s+(document|image|query|schema|category)$/i, '')
     .replace(/^us\b/i, 'U.S.')
     .trim();
-  return normalized || 'OCR schema';
+  return normalized || 'Extraction schema';
 }
 
 function canonicalScalar(field: ScalarField) {

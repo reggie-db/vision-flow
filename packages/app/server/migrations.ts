@@ -92,13 +92,13 @@ export async function migrateRegistry(pool: Pool): Promise<void> {
     await client.query(
       `CREATE INDEX IF NOT EXISTS category_prompts_search_gin ON ${meta}.category_prompts USING gin (search_document)`,
     );
-    await client.query(`COMMENT ON TABLE ${meta}.categories IS 'Registry of reusable OCR image schemas.'`);
+    await client.query(`COMMENT ON TABLE ${meta}.categories IS 'Registry of reusable vision extraction schemas.'`);
     await client.query(`COMMENT ON COLUMN ${meta}.categories.display_name IS 'Human-readable schema name shown in the scanner and dashboard.'`);
-    await client.query(`COMMENT ON COLUMN ${meta}.categories.dashboard_plan IS 'LLM-generated analytics page plan used to build the shared OCR dashboard.'`);
+    await client.query(`COMMENT ON COLUMN ${meta}.categories.dashboard_plan IS 'LLM-generated analytics page plan used to build the shared Vision Flow dashboard.'`);
     await client.query(
-      `COMMENT ON TABLE ${meta}.schema_versions IS 'Immutable OCR extraction contracts and embeddings used for schema matching.'`,
+      `COMMENT ON TABLE ${meta}.schema_versions IS 'Immutable vision extraction contracts and embeddings used for schema matching.'`,
     );
-    await client.query(`COMMENT ON TABLE ${meta}.category_prompts IS 'User prompts associated with reusable OCR schemas.'`);
+    await client.query(`COMMENT ON TABLE ${meta}.category_prompts IS 'User prompts associated with reusable extraction schemas.'`);
     await client.query(`COMMENT ON COLUMN ${meta}.schema_versions.search_text IS 'Human-readable schema summary used for PostgreSQL full-text search.'`);
     await client.query(`COMMENT ON COLUMN ${meta}.schema_versions.search_document IS 'Generated English tsvector used as the primary schema discovery index.'`);
     await client.query(`COMMENT ON COLUMN ${meta}.schema_versions.embedding IS 'Optional pgvector embedding used as a semantic fallback when full-text search finds no schema.'`);

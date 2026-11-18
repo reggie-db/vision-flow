@@ -16,7 +16,7 @@ function relation(name: string): string {
 export const documentsRelation = relation(config.documentsTable);
 export const schemaRegistryRelation = relation(config.schemaRegistryView);
 
-export function ocrStorageStatements(): string[] {
+export function visionStorageStatements(): string[] {
   const remoteSchemaSql = [
     'SELECT c.id::text AS category_id, c.display_name, c.slug, c.description, c.status, c.active_schema_version,',
     'sv.fingerprint, sv.contract::text AS contract_json, sv.extraction_schema::text AS extraction_schema_json, sv.search_text',
@@ -28,7 +28,7 @@ export function ocrStorageStatements(): string[] {
   const volume = config.volumeFullName.split('.').map(identifier).join('.');
 
   return [
-    `CREATE VOLUME IF NOT EXISTS ${volume} COMMENT 'Source images awaiting schema-constrained OCR extraction.'`,
+    `CREATE VOLUME IF NOT EXISTS ${volume} COMMENT 'Source images awaiting schema-constrained vision extraction.'`,
     `DROP VIEW IF EXISTS ${schemaRegistryRelation}`,
     `DROP CONNECTION IF EXISTS ${identifier(config.lakebaseConnection)}`,
     `CREATE CONNECTION ${identifier(config.lakebaseConnection)} TYPE POSTGRESQL OPTIONS (` +
@@ -54,11 +54,11 @@ export function ocrStorageStatements(): string[] {
       model_service STRING COMMENT 'Strong model service used for schema-constrained extraction.',
       processed_at TIMESTAMP COMMENT 'UTC timestamp when processing completed.'
     ) USING DELTA
-    COMMENT 'One row per OCR scan. Join schema_id to the OCR schema registry fingerprint and query nested values from payload.'
+    COMMENT 'One row per image extraction. Join schema_id to the extraction schema registry fingerprint and query nested values from payload.'
     CLUSTER BY AUTO
     TBLPROPERTIES ('quality' = 'silver', 'delta.enableRowTracking' = 'true')`,
     `CREATE OR REPLACE VIEW ${schemaRegistryRelation}
-    COMMENT 'Active OCR schemas read from Lakebase through a secret-backed Unity Catalog PostgreSQL connection.'
+    COMMENT 'Active extraction schemas read from Lakebase through a secret-backed Unity Catalog PostgreSQL connection.'
     AS SELECT
       category_id,
       display_name,
@@ -77,10 +77,10 @@ export function ocrStorageStatements(): string[] {
     )`,
     `COMMENT ON COLUMN ${schemaRegistryRelation}.category_id IS 'Lakebase category UUID.'`,
     `COMMENT ON COLUMN ${schemaRegistryRelation}.display_name IS 'Human-readable schema name shown in the scanner and dashboard.'`,
-    `COMMENT ON COLUMN ${schemaRegistryRelation}.slug IS 'Stable schema category identifier used in uploaded paths and OCR scans.'`,
-    `COMMENT ON COLUMN ${schemaRegistryRelation}.description IS 'Human-readable purpose of the OCR schema.'`,
+    `COMMENT ON COLUMN ${schemaRegistryRelation}.slug IS 'Stable schema category identifier used in uploaded paths and image extractions.'`,
+    `COMMENT ON COLUMN ${schemaRegistryRelation}.description IS 'Human-readable purpose of the extraction schema.'`,
     `COMMENT ON COLUMN ${schemaRegistryRelation}.active_schema_version IS 'Current immutable schema version.'`,
-    `COMMENT ON COLUMN ${schemaRegistryRelation}.fingerprint IS 'SHA-256 schema identifier; join to the OCR results schema_id.'`,
+    `COMMENT ON COLUMN ${schemaRegistryRelation}.fingerprint IS 'SHA-256 schema identifier; join to the extraction results schema_id.'`,
     `COMMENT ON COLUMN ${schemaRegistryRelation}.contract IS 'VARIANT contract containing schema intent, extraction instructions, and field definitions.'`,
     `COMMENT ON COLUMN ${schemaRegistryRelation}.extraction_schema IS 'VARIANT JSON Schema used by the strong extraction model.'`,
     `COMMENT ON COLUMN ${schemaRegistryRelation}.search_text IS 'Schema descriptions and field hints used for discovery and context.'`,
@@ -89,6 +89,6 @@ export function ocrStorageStatements(): string[] {
   ];
 }
 
-export async function ensureOcrStorage(): Promise<void> {
-  await executeUcStatements(ocrStorageStatements());
+export async function ensureVisionStorage(): Promise<void> {
+  await executeUcStatements(visionStorageStatements());
 }

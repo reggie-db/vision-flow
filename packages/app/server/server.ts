@@ -12,7 +12,7 @@ import {
   ImageUploadRequestSchema,
   type OperationEvent,
   type UploadResponse,
-} from '../shared/ocr-contracts.ts';
+} from '../shared/vision-contracts.ts';
 import {
   deleteCategoryAndRefresh,
   ensureDefaultCategory,
@@ -44,13 +44,13 @@ const mastraPostgres = {
   max: 4,
   idleTimeoutMillis: 30_000,
 };
-const ocrDataAssistant = agents.createAgent({
+const visionDataAssistant = agents.createAgent({
   name: 'Vision Flow data assistant',
-  description: 'Answers questions about schema-defined OCR results published to the curated Genie space.',
+  description: 'Answers questions about schema-defined image extraction results published to the curated Genie space.',
   instructions: [
     'You answer questions about scans processed by the Vision Flow application.',
     'Use the configured Genie tools for every question about scanned images, counts, nested fields, confidence, review status, or processing results.',
-    'Use the OCR schema registry view to discover the correct payload field path before querying schema-specific values.',
+    'Use the extraction schema registry view to discover the correct payload field path before querying schema-specific values.',
     'Treat Genie and its generated SQL as the source of truth. Never invent rows, field values, scan outcomes, or processing status.',
     'State when the available tables do not contain enough information. Mention review flags or low-confidence fields when they affect the answer.',
     genie.GENIE_INSTRUCTIONS,
@@ -59,8 +59,8 @@ const ocrDataAssistant = agents.createAgent({
     const genieTools = await plugins.genie?.toolkit({ prefix: '' });
     return { ...(genieTools ?? {}) };
   },
-  storage: { ...mastraPostgres, schemaName: 'mastra_ocr_data' },
-  memory: { ...mastraPostgres, schemaName: 'mastra_ocr_memory' },
+  storage: { ...mastraPostgres, schemaName: 'mastra_vision_data' },
+  memory: { ...mastraPostgres, schemaName: 'mastra_vision_memory' },
 });
 
 interface EncodedImage {
@@ -116,8 +116,8 @@ await appkit.createApp({
       },
     }),
     mastra({
-      agents: { ocr_data: ocrDataAssistant },
-      defaultAgent: 'ocr_data',
+      agents: { vision_data: visionDataAssistant },
+      defaultAgent: 'vision_data',
       backgroundTurns: false,
       storage: { id: 'vision-flow-mastra', ...mastraPostgres, schemaName: 'mastra_instance' },
       memory: false,
@@ -125,7 +125,7 @@ await appkit.createApp({
       genieSpaces: {
         default: {
           spaceId: config.genieSpaceId,
-          hint: 'schema-defined OCR scans, nested payload fields, schema context, full text, confidence, review status, and processing metadata',
+          hint: 'schema-defined image extractions, nested payload fields, schema context, full text, confidence, review status, and processing metadata',
         },
       },
     }),

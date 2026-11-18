@@ -24,7 +24,7 @@ The local tunnel is `https://local-vision-flow.apps.dbx.tools`.
 
 ## Workspace setup
 
-The bundle variables in `databricks.yml` are the shared configuration source. Setup stores the shared Lakebase role and generated password in the configured secret scope, migrates the schema registry, creates the Delta results table, creates the federated schema view, removes legacy OCR output tables, seeds the default schema, and updates Genie.
+The bundle variables in `databricks.yml` are the shared configuration source. Setup stores the shared Lakebase role and generated password in the configured secret scope, migrates the schema registry, creates the Delta results table, creates the federated schema view, removes legacy output tables, seeds the default schema, and updates Genie.
 
 ```bash
 DATABRICKS_CONFIG_PROFILE=DEFAULT bun packages/app/scripts/setup.ts secret

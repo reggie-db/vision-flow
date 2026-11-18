@@ -22,7 +22,7 @@ variables:
     default: databricks-gte-large-en
   documents_volume:
     description: Unity Catalog volume root for immutable schema/version document uploads
-    default: reggie_pierce_aws_catalog.cstore_ops.ocr_source_images
+    default: reggie_pierce_aws_catalog.cstore_ops.vision_source_images
   lakebase_project_id:
     description: Lakebase Autoscaling project ID
     default: vision-flow
@@ -58,16 +58,16 @@ variables:
     default: lakebase-user
   meta_schema:
     description: Lakebase schema for category registry and processing metadata
-    default: ocr_meta
+    default: vision_meta
   documents_table:
-    description: Single Delta table containing all OCR document payloads
-    default: ocr_documents
+    description: Single Delta table containing all structured image payloads
+    default: vision_documents
   lakebase_connection:
     description: Unity Catalog PostgreSQL connection used to read the Lakebase schema registry
-    default: ocr_lakebase
+    default: vision_lakebase
   schema_registry_view:
-    description: Unity Catalog view exposing active Lakebase OCR schemas
-    default: ocr_schema_registry
+    description: Unity Catalog view exposing active Lakebase extraction schemas
+    default: vision_schema_registry
   genie_catalog:
     description: Existing writable Unity Catalog catalog containing typed Delta mirrors for Genie
     default: reggie_pierce_aws_catalog
@@ -84,10 +84,10 @@ variables:
     description: SQL warehouse used to verify Lakebase catalog readability and power Genie
     default: a2171589c3905bc7
   dashboard_display_name:
-    description: Display name of the shared AI/BI dashboard with one generated page per OCR schema
+    description: Display name of the shared AI/BI dashboard with one generated page per extraction schema
     default: Vision Flow Analytics
   dashboard_id:
-    description: Existing AI/BI dashboard updated as OCR schemas are created, renamed, and deleted
+    description: Existing AI/BI dashboard updated as extraction schemas are created, renamed, and deleted
     default: 01f1cd7c4bcf128daaacdfe8894b0f64
   workspace_host:
     description: Workspace host used for dashboard links in the PWA
@@ -108,7 +108,7 @@ variables:
     description: Maximum PostgreSQL pools cached per Spark worker
     default: 1
   pipeline_trigger_interval:
-    description: Micro-batch trigger interval for the continuous OCR pipeline
+    description: Micro-batch trigger interval for the continuous vision extraction pipeline
     default: 1 second
   app_started:
     description: Whether the Databricks App should be running after deployment
@@ -116,11 +116,11 @@ variables:
 
 resources:
   dashboards:
-    ocr_dashboard:
+    vision_dashboard:
       display_name: ${var.dashboard_display_name}
       dataset_catalog: ${var.genie_catalog}
       dataset_schema: ${var.genie_schema}
-      file_path: ./dashboards/ocr.lvdash.json
+      file_path: ./dashboards/vision-flow.lvdash.json
       warehouse_id: ${var.genie_warehouse_id}
       embed_credentials: false
       permissions:
@@ -213,7 +213,7 @@ resources:
             id: ${var.genie_warehouse_id}
             permission: CAN_USE
   pipelines:
-    ocr_pipeline:
+    vision_pipeline:
       name: vision_flow
       catalog: ${var.catalog}
       schema: ${var.schema}
@@ -228,22 +228,22 @@ resources:
           - psycopg[pool]>=3.2.10
       configuration:
         pipelines.trigger.interval: ${var.pipeline_trigger_interval}
-        ocr.volume: ${var.documents_volume}
-        ocr.model_service: ${var.extraction_model_service}
-        ocr.lakebase_project: projects/${var.lakebase_project_id}
-        ocr.lakebase_branch: projects/${var.lakebase_project_id}/branches/${var.lakebase_branch_id}
-        ocr.lakebase_endpoint: projects/${var.lakebase_project_id}/branches/${var.lakebase_branch_id}/endpoints/${var.lakebase_endpoint_id}
-        ocr.lakebase_database: ${var.lakebase_database_name}
-        ocr.lakebase_role: ${var.lakebase_role_name}
-        ocr.secret_scope: ${var.lakebase_secret_scope}
-        ocr.password_key: ${var.lakebase_password_key}
-        ocr.meta_schema: ${var.meta_schema}
-        ocr.documents_table: ${var.documents_table}
-        ocr.genie_catalog: ${var.genie_catalog}
-        ocr.genie_schema: ${var.genie_schema}
-        ocr.review_threshold: ${var.review_threshold}
-        ocr.worker_schema_cache_size: ${var.worker_schema_cache_size}
-        ocr.worker_pool_cache_size: ${var.worker_pool_cache_size}
+        vision_flow.volume: ${var.documents_volume}
+        vision_flow.model_service: ${var.extraction_model_service}
+        vision_flow.lakebase_project: projects/${var.lakebase_project_id}
+        vision_flow.lakebase_branch: projects/${var.lakebase_project_id}/branches/${var.lakebase_branch_id}
+        vision_flow.lakebase_endpoint: projects/${var.lakebase_project_id}/branches/${var.lakebase_branch_id}/endpoints/${var.lakebase_endpoint_id}
+        vision_flow.lakebase_database: ${var.lakebase_database_name}
+        vision_flow.lakebase_role: ${var.lakebase_role_name}
+        vision_flow.secret_scope: ${var.lakebase_secret_scope}
+        vision_flow.password_key: ${var.lakebase_password_key}
+        vision_flow.meta_schema: ${var.meta_schema}
+        vision_flow.documents_table: ${var.documents_table}
+        vision_flow.genie_catalog: ${var.genie_catalog}
+        vision_flow.genie_schema: ${var.genie_schema}
+        vision_flow.review_threshold: ${var.review_threshold}
+        vision_flow.worker_schema_cache_size: ${var.worker_schema_cache_size}
+        vision_flow.worker_pool_cache_size: ${var.worker_pool_cache_size}
         bundle.sourcePath: ${workspace.file_path}/src
 
 targets:

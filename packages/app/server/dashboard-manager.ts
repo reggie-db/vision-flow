@@ -1,7 +1,7 @@
 import { createHash } from 'node:crypto';
 import { withAdvisoryLock } from '@dbx-tools/postgres';
 import { z } from 'zod';
-import type { CategoryContract, ScalarField } from '../shared/ocr-contracts.ts';
+import type { CategoryContract, ScalarField } from '../shared/vision-contracts.ts';
 import { config } from './config.ts';
 import { database } from './database.ts';
 import { DatabricksApiError, databricksJson } from './databricks-api.ts';
@@ -417,7 +417,7 @@ async function updateDashboard(dashboardId: string, serialized: string, includeE
   });
 }
 
-export async function refreshOcrDashboard(): Promise<string> {
+export async function refreshVisionDashboard(): Promise<string> {
   return withAdvisoryLock(database, ['vision-flow', 'dashboard', config.dashboardDisplayName], async () => {
     const categories = await listDashboardCategories();
     const { serialized, queries } = serializedDashboard(categories);
@@ -454,5 +454,5 @@ export async function ensureCategoryDashboard(categoryId: string): Promise<strin
     }
     await setCategoryDashboardPlan(category.id, plan);
   }
-  return refreshOcrDashboard();
+  return refreshVisionDashboard();
 }

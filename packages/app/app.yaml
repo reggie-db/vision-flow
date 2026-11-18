@@ -4,65 +4,65 @@ command:
   - ./node_modules/.bin/bun
   - server/server.ts
 env:
-  - name: OCR_MODEL_SERVICE
+  - name: VISION_FLOW_MODEL_SERVICE
     valueFrom: quick-model
-  - name: OCR_DASHBOARD_MODEL_SERVICE
+  - name: VISION_FLOW_DASHBOARD_MODEL_SERVICE
     valueFrom: dashboard-model
-  - name: OCR_EMBEDDING_ENDPOINT
+  - name: VISION_FLOW_EMBEDDING_ENDPOINT
     valueFrom: embedding-endpoint
-  - name: OCR_VOLUME_FULL_NAME
-    value: reggie_pierce_aws_catalog.cstore_ops.ocr_source_images
-  - name: OCR_LAKEBASE_PROJECT
+  - name: VISION_FLOW_VOLUME_FULL_NAME
+    value: reggie_pierce_aws_catalog.cstore_ops.vision_source_images
+  - name: VISION_FLOW_LAKEBASE_PROJECT
     value: projects/vision-flow
-  - name: OCR_LAKEBASE_BRANCH
+  - name: VISION_FLOW_LAKEBASE_BRANCH
     value: projects/vision-flow/branches/production
-  - name: OCR_LAKEBASE_ENDPOINT
+  - name: VISION_FLOW_LAKEBASE_ENDPOINT
     value: projects/vision-flow/branches/production/endpoints/primary
-  - name: OCR_LAKEBASE_DATABASE
+  - name: VISION_FLOW_LAKEBASE_DATABASE
     value: vision_flow
-  - name: OCR_LAKEBASE_ROLE
+  - name: VISION_FLOW_LAKEBASE_ROLE
     value: vision_flow_runtime
-  - name: OCR_LAKEBASE_SECRET_SCOPE
+  - name: VISION_FLOW_LAKEBASE_SECRET_SCOPE
     value: vision-flow
-  - name: OCR_LAKEBASE_USER_KEY
+  - name: VISION_FLOW_LAKEBASE_USER_KEY
     value: lakebase-user
-  - name: OCR_LAKEBASE_PASSWORD_KEY
+  - name: VISION_FLOW_LAKEBASE_PASSWORD_KEY
     value: lakebase-password
-  - name: OCR_LAKEBASE_CONNECTION
-    value: ocr_lakebase
-  - name: OCR_GENIE_CATALOG
+  - name: VISION_FLOW_LAKEBASE_CONNECTION
+    value: vision_lakebase
+  - name: VISION_FLOW_GENIE_CATALOG
     value: reggie_pierce_aws_catalog
-  - name: OCR_GENIE_SCHEMA
+  - name: VISION_FLOW_GENIE_SCHEMA
     value: cstore_ops
-  - name: OCR_META_SCHEMA
-    value: ocr_meta
-  - name: OCR_DOCUMENTS_TABLE
-    value: ocr_documents
-  - name: OCR_SCHEMA_REGISTRY_VIEW
-    value: ocr_schema_registry
-  - name: OCR_GENIE_SPACE_ID
+  - name: VISION_FLOW_META_SCHEMA
+    value: vision_meta
+  - name: VISION_FLOW_DOCUMENTS_TABLE
+    value: vision_documents
+  - name: VISION_FLOW_SCHEMA_REGISTRY_VIEW
+    value: vision_schema_registry
+  - name: VISION_FLOW_GENIE_SPACE_ID
     valueFrom: genie-space
-  - name: OCR_GENIE_WAREHOUSE_ID
+  - name: VISION_FLOW_GENIE_WAREHOUSE_ID
     valueFrom: sql-warehouse
-  - name: OCR_GENIE_MAX_TABLES
+  - name: VISION_FLOW_GENIE_MAX_TABLES
     value: "30"
-  - name: OCR_DASHBOARD_ID
+  - name: VISION_FLOW_DASHBOARD_ID
     value: 01f1cd7c4bcf128daaacdfe8894b0f64
-  - name: OCR_DASHBOARD_DISPLAY_NAME
+  - name: VISION_FLOW_DASHBOARD_DISPLAY_NAME
     value: Vision Flow Analytics
-  - name: OCR_WORKSPACE_HOST
+  - name: VISION_FLOW_WORKSPACE_HOST
     value: https://fevm-reggie-pierce-aws.cloud.databricks.com
   - name: MASTRA_GENIE_IDENTITY
     value: service-principal
-  - name: OCR_REVIEW_THRESHOLD
+  - name: VISION_FLOW_REVIEW_THRESHOLD
     value: "0.8"
-  - name: OCR_PG_USER
+  - name: VISION_FLOW_PG_USER
     value: vision_flow_runtime
   - name: PGROLE
     value: vision_flow_runtime
   - name: DBX_TOOLS_POSTGRES_ROLE
     value: vision_flow_runtime
-  - name: OCR_PG_PASSWORD
+  - name: VISION_FLOW_PG_PASSWORD
     valueFrom: lakebase-password
   - name: DATABRICKS_VOLUME_FILES
     valueFrom: documents-volume

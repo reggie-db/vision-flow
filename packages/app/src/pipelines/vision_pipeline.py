@@ -1,4 +1,4 @@
-"""Continuously extract schema-pinned OCR images into one Delta table."""
+"""Continuously extract schema-pinned images into one Delta table."""
 
 import base64
 import json
@@ -16,20 +16,20 @@ from pyspark.sql import DataFrame, Row
 from pyspark.sql import functions as F
 from pyspark.sql.types import ArrayType, BooleanType, IntegerType, StringType, StructField, StructType, TimestampType
 
-VOLUME_FULL_NAME = spark.conf.get("ocr.volume")
-MODEL_SERVICE = spark.conf.get("ocr.model_service")
-LAKEBASE_ENDPOINT = spark.conf.get("ocr.lakebase_endpoint")
-LAKEBASE_DATABASE = spark.conf.get("ocr.lakebase_database")
-LAKEBASE_ROLE = spark.conf.get("ocr.lakebase_role")
-SECRET_SCOPE = spark.conf.get("ocr.secret_scope")
-PASSWORD_KEY = spark.conf.get("ocr.password_key")
-META_SCHEMA = spark.conf.get("ocr.meta_schema")
-GENIE_CATALOG = spark.conf.get("ocr.genie_catalog")
-GENIE_SCHEMA = spark.conf.get("ocr.genie_schema")
-DOCUMENTS_TABLE = spark.conf.get("ocr.documents_table")
-REVIEW_THRESHOLD = float(spark.conf.get("ocr.review_threshold"))
-SCHEMA_CACHE_SIZE = int(spark.conf.get("ocr.worker_schema_cache_size"))
-POOL_CACHE_SIZE = int(spark.conf.get("ocr.worker_pool_cache_size"))
+VOLUME_FULL_NAME = spark.conf.get("vision_flow.volume")
+MODEL_SERVICE = spark.conf.get("vision_flow.model_service")
+LAKEBASE_ENDPOINT = spark.conf.get("vision_flow.lakebase_endpoint")
+LAKEBASE_DATABASE = spark.conf.get("vision_flow.lakebase_database")
+LAKEBASE_ROLE = spark.conf.get("vision_flow.lakebase_role")
+SECRET_SCOPE = spark.conf.get("vision_flow.secret_scope")
+PASSWORD_KEY = spark.conf.get("vision_flow.password_key")
+META_SCHEMA = spark.conf.get("vision_flow.meta_schema")
+GENIE_CATALOG = spark.conf.get("vision_flow.genie_catalog")
+GENIE_SCHEMA = spark.conf.get("vision_flow.genie_schema")
+DOCUMENTS_TABLE = spark.conf.get("vision_flow.documents_table")
+REVIEW_THRESHOLD = float(spark.conf.get("vision_flow.review_threshold"))
+SCHEMA_CACHE_SIZE = int(spark.conf.get("vision_flow.worker_schema_cache_size"))
+POOL_CACHE_SIZE = int(spark.conf.get("vision_flow.worker_pool_cache_size"))
 VOLUME_PATH = f"/Volumes/{VOLUME_FULL_NAME.replace('.', '/')}"
 _IDENTIFIER = re.compile(r"^[a-z][a-z0-9_]{0,95}$")
 
@@ -89,7 +89,7 @@ def _schema(host: str, database: str, role: str, password: str, slug: str, versi
             )
             row = cursor.fetchone()
     if not row:
-        raise LookupError(f"No OCR schema for {slug} v{version}")
+        raise LookupError(f"No extraction schema for {slug} v{version}")
     return {"category_id": str(row[0]), "fingerprint": row[1], "contract": row[2], "extraction_schema": row[3]}
 
 
@@ -114,7 +114,7 @@ def _extract(image: bytes, extension: str, schema: dict[str, Any]) -> dict[str, 
     image_url = f"data:{mime_type};base64,{base64.b64encode(image).decode('ascii')}"
     prompt = "\n".join(
         [
-            "Extract this image using the supplied immutable OCR schema.",
+            "Extract this image using the supplied immutable extraction schema.",
             "Return only facts visible in the image and do not infer hidden values.",
             "generic_description must be a concise, domain-neutral description suitable for full-text search.",
             "full_text must transcribe all legible text in reading order.",
@@ -128,7 +128,7 @@ def _extract(image: bytes, extension: str, schema: dict[str, Any]) -> dict[str, 
         json={
             "model": MODEL_SERVICE,
             "input": [{"role": "user", "content": [{"type": "input_text", "text": prompt}, {"type": "input_image", "image_url": image_url}]}],
-            "text": {"format": {"type": "json_schema", "name": "ocr_document_extraction", "strict": True, "schema": schema["extraction_schema"]}},
+            "text": {"format": {"type": "json_schema", "name": "vision_document_extraction", "strict": True, "schema": schema["extraction_schema"]}},
             "max_output_tokens": 8192,
             "reasoning": {"effort": "medium"},
         },
@@ -279,7 +279,7 @@ RESULT_SCHEMA = StructType(
 def _merge_documents(rows: list[dict[str, Any]]) -> None:
     if not rows:
         return
-    view_name = "_ocr_document_batch"
+    view_name = "_vision_document_batch"
     spark.createDataFrame(rows, schema=RESULT_SCHEMA).createOrReplaceTempView(view_name)
     try:
         spark.sql(
@@ -303,13 +303,13 @@ def _merge_documents(rows: list[dict[str, Any]]) -> None:
 
 
 @dp.table(
-    name="ocr_images_bronze",
-    comment="Immutable schema/version-pinned OCR images incrementally discovered from the Unity Catalog volume.",
+    name="vision_images_bronze",
+    comment="Immutable schema/version-pinned images incrementally discovered from the Unity Catalog volume.",
     table_properties={"quality": "bronze", "delta.enableRowTracking": "true"},
 )
 @dp.expect_or_drop("supported_image", "lower(file_extension) IN ('jpg', 'jpeg', 'png')")
 @dp.expect_or_drop("valid_schema_path", "schema_slug <> '' AND schema_version IS NOT NULL AND document_id <> ''")
-def ocr_images_bronze() -> DataFrame:
+def vision_images_bronze() -> DataFrame:
     relative = F.regexp_extract("path", rf"{re.escape(VOLUME_PATH)}/(.+)$", 1)
     return (
         spark.readStream.format("cloudFiles")
@@ -329,12 +329,12 @@ def ocr_images_bronze() -> DataFrame:
     )
 
 
-@dp.foreach_batch_sink(name="ocr_document_sink")
-def ocr_document_sink(batch: DataFrame, batch_id: int) -> None:
+@dp.foreach_batch_sink(name="vision_document_sink")
+def vision_document_sink(batch: DataFrame, batch_id: int) -> None:
     del batch_id
     _merge_documents(list(_process_partition(batch.collect(), PG_HOST, PG_PASSWORD)))
 
 
-@dp.append_flow(target="ocr_document_sink")
-def ocr_document_flow() -> DataFrame:
-    return spark.readStream.table("ocr_images_bronze")
+@dp.append_flow(target="vision_document_sink")
+def vision_document_flow() -> DataFrame:
+    return spark.readStream.table("vision_images_bronze")

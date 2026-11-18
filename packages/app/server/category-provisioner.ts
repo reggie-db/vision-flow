@@ -1,9 +1,9 @@
 import { withAdvisoryTransactionLock } from '@dbx-tools/postgres';
-import type { Category, CategoryContract } from '../shared/ocr-contracts.ts';
+import type { Category, CategoryContract } from '../shared/vision-contracts.ts';
 import { config } from './config.ts';
-import { ensureCategoryDashboard, refreshOcrDashboard } from './dashboard-manager.ts';
+import { ensureCategoryDashboard, refreshVisionDashboard } from './dashboard-manager.ts';
 import { database } from './database.ts';
-import { ensureOcrGenieSpace } from './genie-manager.ts';
+import { ensureVisionGenieSpace } from './genie-manager.ts';
 import { decideCategory, embedText } from './model-gateway.ts';
 import { appendOperationEvent, completeOperation, failOperation } from './operations.ts';
 import {
@@ -45,7 +45,7 @@ async function finishProvisioning(categoryId: string, slug: string, operationId?
   try {
     emit(operationId, {
       stage: 'preparing_storage',
-      message: 'Registering the immutable schema for the shared OCR image store.',
+      message: 'Registering the immutable schema for the shared image store.',
       categoryId,
       categorySlug: slug,
     });
@@ -53,11 +53,11 @@ async function finishProvisioning(categoryId: string, slug: string, operationId?
 
     emit(operationId, {
       stage: 'updating_genie',
-      message: 'Refreshing the additive OCR data and schema context in Genie.',
+      message: 'Refreshing the additive extraction data and schema context in Genie.',
       categoryId,
       categorySlug: slug,
     });
-    await ensureOcrGenieSpace();
+    await ensureVisionGenieSpace();
     await setCategoryStatus(categoryId, 'genie_configured');
 
     emit(operationId, {
@@ -94,14 +94,14 @@ async function provisionSpec(spec: ProvisionSpec, operationId?: string): Promise
     if (existing.status !== 'ready') return finishProvisioning(existing.id, existing.slug, operationId);
     emit(operationId, {
       stage: 'updating_genie',
-      message: 'Refreshing the additive OCR data and schema context in Genie.',
+      message: 'Refreshing the additive extraction data and schema context in Genie.',
       categoryId: existing.id,
       categorySlug: existing.slug,
     });
-    await ensureOcrGenieSpace();
+    await ensureVisionGenieSpace();
     emit(operationId, {
       stage: 'updating_dashboard',
-      message: 'Refreshing the shared OCR dashboard.',
+      message: 'Refreshing the shared Vision Flow dashboard.',
       categoryId: existing.id,
       categorySlug: existing.slug,
     });
@@ -175,7 +175,7 @@ export async function provisionCategoryFromPrompt(
     if (exact?.status === 'ready') {
       emit(operationId, {
         stage: 'updating_dashboard',
-        message: 'Refreshing the shared OCR dashboard.',
+        message: 'Refreshing the shared Vision Flow dashboard.',
         categoryId: exact.id,
         categorySlug: exact.slug,
       });
@@ -240,7 +240,7 @@ export async function provisionCategoryFromPrompt(
 
     await provisionSpec(
       {
-        displayName: requestedDisplayName ?? decision.displayName ?? decision.description ?? 'OCR schema',
+        displayName: requestedDisplayName ?? decision.displayName ?? decision.description ?? 'Extraction schema',
         slug: decision.categorySlug ?? `image_${proposedFingerprint.slice(0, 8)}`,
         description: decision.description ?? decision.contract.documentIntent,
         contract: decision.contract,
@@ -318,18 +318,18 @@ export async function deleteCategoryAndRefresh(operationId: string, categoryId: 
     if (!(await deleteCategoryRecord(categoryId))) throw new Error('The selected schema no longer exists.');
     emit(operationId, {
       stage: 'updating_genie',
-      message: 'Refreshing OCR schema context in Genie.',
+      message: 'Refreshing extraction schema context in Genie.',
       categoryId,
       categorySlug: category.slug,
     });
-    await ensureOcrGenieSpace();
+    await ensureVisionGenieSpace();
     emit(operationId, {
       stage: 'updating_dashboard',
       message: 'Removing the schema page from the shared dashboard.',
       categoryId,
       categorySlug: category.slug,
     });
-    await refreshOcrDashboard();
+    await refreshVisionDashboard();
     emit(operationId, {
       stage: 'ready',
       message: `${category.displayName} was deleted.`,

@@ -1,5 +1,5 @@
 import { EventEmitter } from 'node:events';
-import type { OperationEvent } from '../shared/ocr-contracts.ts';
+import type { OperationEvent } from '../shared/vision-contracts.ts';
 
 interface OperationState {
   events: OperationEvent[];
