@@ -1,6 +1,8 @@
 import { z } from 'zod';
 import {
   CategoryContractSchema,
+  CaptureGuideSchema,
+  type CaptureGuide,
   ImageGateResultSchema,
   type CategoryContract,
   type ContractField,
@@ -30,6 +32,7 @@ export const CategoryDecisionSchema = z.object({
   description: z.string().nullable(),
   clarification: z.string().nullable(),
   reasoningSummary: z.string(),
+  captureGuide: CaptureGuideSchema,
   contract: CategoryContractSchema.nullable(),
 });
 
@@ -52,6 +55,7 @@ interface CandidateCategory {
   slug: string;
   description: string;
   contract: CategoryContract;
+  captureGuide: CaptureGuide;
   prompts: string[];
   similarity?: number;
 }
@@ -110,7 +114,11 @@ export async function embedText(text: string): Promise<number[]> {
   return EmbeddingResponseSchema.parse(await response.json()).data[0]!.embedding;
 }
 
-export async function decideCategory(prompt: string, candidates: CandidateCategory[]): Promise<CategoryDecision> {
+export async function decideCategory(
+  prompt: string,
+  candidates: CandidateCategory[],
+  captureGuide?: CaptureGuide,
+): Promise<CategoryDecision> {
   return structuredResponse(
     'vision_category_decision',
     CategoryDecisionSchema,
@@ -122,6 +130,8 @@ export async function decideCategory(prompt: string, candidates: CandidateCatego
       'For a new category, use lowercase snake_case identifiers and include useful fields. Every field must have a precise description.',
       'For a new category, return a concise human-readable displayName in title case. Do not end it with Image, Document, Query, Schema, or Category. Keep internal identifiers in categorySlug only.',
       'Images with repeated line items should use one array field whose itemFields describe each item.',
+      'Choose captureGuide=vertical for tall receipts, forms, or portrait documents; horizontal for IDs, cards, and landscape documents; none for open scenes such as counting objects or auditing a room.',
+      captureGuide ? `The user explicitly selected captureGuide=${captureGuide}; return that exact value.` : 'Infer captureGuide from the requested subject.',
       `User request: ${prompt}`,
       `Candidates: ${JSON.stringify(candidates)}`,
     ].join('\n'),

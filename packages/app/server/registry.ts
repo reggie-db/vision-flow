@@ -1,5 +1,5 @@
 import type { PoolClient } from 'pg';
-import type { Category, CategoryContract } from '../shared/vision-contracts.ts';
+import type { CaptureGuide, Category, CategoryContract } from '../shared/vision-contracts.ts';
 import type { DashboardPagePlan } from './model-gateway.ts';
 import { database } from './database.ts';
 import { config } from './config.ts';
@@ -13,6 +13,7 @@ interface CategoryRow {
   description: string;
   status: Category['status'];
   active_schema_version: number;
+  capture_guide: CaptureGuide;
   contract: CategoryContract;
   table_name: string;
   uc_table: string;
@@ -25,6 +26,7 @@ export interface CategoryCandidate {
   displayName: string;
   slug: string;
   description: string;
+  captureGuide: CaptureGuide;
   contract: CategoryContract;
   prompts: string[];
   textRank?: number;
@@ -64,6 +66,7 @@ function mapCategory(row: CategoryRow): Category {
     description: row.description,
     status: row.status,
     activeSchemaVersion: row.active_schema_version,
+    captureGuide: row.capture_guide,
     contract: row.contract,
     tableName: row.table_name,
     ucTable: row.uc_table,
@@ -74,7 +77,7 @@ function mapCategory(row: CategoryRow): Category {
 }
 
 const categorySelect = `
-  SELECT c.id, c.display_name, c.slug, c.description, c.status, c.active_schema_version,
+  SELECT c.id, c.display_name, c.slug, c.description, c.status, c.active_schema_version, c.capture_guide,
          sv.fingerprint, sv.contract, c.table_name, c.uc_table, c.volume_directory,
          COALESCE(jsonb_agg(jsonb_build_object(
            'id', p.id,
@@ -127,6 +130,7 @@ export async function findCandidateCategories(
     display_name: string;
     slug: string;
     description: string;
+    capture_guide: CaptureGuide;
     contract: CategoryContract;
     prompts: string[];
     text_rank: number;
@@ -141,7 +145,7 @@ export async function findCandidateCategories(
         WHERE p.search_document @@ search_query.query
         GROUP BY p.category_id
      )
-     SELECT c.id, c.display_name, c.slug, c.description, sv.contract,
+     SELECT c.id, c.display_name, c.slug, c.description, c.capture_guide, sv.contract,
             COALESCE(array_agg(p.prompt) FILTER (WHERE p.prompt IS NOT NULL), ARRAY[]::text[]) AS prompts,
             GREATEST(ts_rank_cd(sv.search_document, search_query.query), COALESCE(prompt_scores.rank, 0)) AS text_rank,
             CASE WHEN $2::vector IS NULL THEN NULL ELSE 1 - (sv.embedding <=> $2::vector) END AS similarity
@@ -163,6 +167,7 @@ export async function findCandidateCategories(
       displayName: row.display_name,
       slug: row.slug,
       description: row.description,
+      captureGuide: row.capture_guide,
       contract: row.contract,
       prompts: row.prompts,
       textRank: row.text_rank,
@@ -175,11 +180,12 @@ export async function findCandidateCategories(
     display_name: string;
     slug: string;
     description: string;
+    capture_guide: CaptureGuide;
     contract: CategoryContract;
     prompts: string[];
     similarity: number;
   }>(
-    `SELECT c.id, c.display_name, c.slug, c.description, sv.contract,
+    `SELECT c.id, c.display_name, c.slug, c.description, c.capture_guide, sv.contract,
             COALESCE(array_agg(p.prompt) FILTER (WHERE p.prompt IS NOT NULL), ARRAY[]::text[]) AS prompts,
             1 - (sv.embedding <=> $1::vector) AS similarity
        FROM ${relation('schema_versions')} sv
@@ -196,6 +202,7 @@ export async function findCandidateCategories(
     displayName: row.display_name,
     slug: row.slug,
     description: row.description,
+    captureGuide: row.capture_guide,
     contract: row.contract,
     prompts: row.prompts,
     similarity: row.similarity,
@@ -226,6 +233,7 @@ export async function insertCategory(
     displayName: string;
     slug: string;
     description: string;
+    captureGuide: CaptureGuide;
     fingerprint: string;
     contract: CategoryContract;
     extractionSchema: Record<string, unknown>;
@@ -236,13 +244,14 @@ export async function insertCategory(
 ): Promise<void> {
   await client.query(
     `INSERT INTO ${relation('categories')}
-      (id, display_name, slug, description, status, active_schema_version, table_name, uc_table, volume_directory)
-     VALUES ($1, $2, $3, $4, 'resolving', 1, $5, $6, $3)`,
+      (id, display_name, slug, description, status, active_schema_version, capture_guide, table_name, uc_table, volume_directory)
+     VALUES ($1, $2, $3, $4, 'resolving', 1, $5, $6, $7, $3)`,
     [
       input.id,
       input.displayName,
       input.slug,
       input.description,
+      input.captureGuide,
       config.documentsTable,
       `${config.genieCatalog}.${config.genieSchema}.${config.documentsTable}`,
     ],
@@ -300,6 +309,14 @@ export async function renameCategory(categoryId: string, displayName: string): P
   const result = await database.query(
     `UPDATE ${relation('categories')} SET display_name = $2, dashboard_plan = NULL, updated_at = NOW() WHERE id = $1`,
     [categoryId, displayName.trim()],
+  );
+  return (result.rowCount ?? 0) > 0;
+}
+
+export async function setCategoryCaptureGuide(categoryId: string, captureGuide: CaptureGuide): Promise<boolean> {
+  const result = await database.query(
+    `UPDATE ${relation('categories')} SET capture_guide = $2, updated_at = NOW() WHERE id = $1`,
+    [categoryId, captureGuide],
   );
   return (result.rowCount ?? 0) > 0;
 }

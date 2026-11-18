@@ -1,0 +1,47 @@
+{
+  "schemaVersion": "1",
+  "name": "Vision Flow",
+  "shortName": "Vision Flow",
+  "tagline": "Every image is a form.",
+  "description": "Vision Flow turns photos of receipts, shelves, and IDs into typed rows on Databricks. Describe the fields once; Vision Flow writes the prompt, reads the image, and lands typed rows in Delta.",
+  "assets": {
+    "icon": {
+      "light": "/brand/icon-light.svg",
+      "dark": "/brand/icon-dark.svg"
+    },
+    "logo": {
+      "light": "/brand/logo-light.svg",
+      "dark": "/brand/logo-dark.svg"
+    },
+    "favicon": "/favicon.svg"
+  },
+  "colors": {
+    "primary": "#FF3621",
+    "primaryHover": "#E02E1B",
+    "accent": "#00875A",
+    "foreground": "#1B3139",
+    "background": "#FFFFFF",
+    "surface": "#F9F7F4",
+    "muted": "#5A6F77",
+    "border": "#DCDAD3"
+  },
+  "typography": {
+    "sans": "'DM Sans Variable', 'DM Sans', ui-sans-serif, system-ui, sans-serif",
+    "mono": "'DM Mono', ui-monospace, SFMono-Regular, Menlo, monospace"
+  },
+  "voice": {
+    "audience": ["field staff capturing images", "Databricks data engineers", "analysts querying extracted data"],
+    "tone": ["direct", "plain", "specific"],
+    "principles": [
+      "State what happened: '5 fields extracted', 'Needs review: expiration_date 0.62'.",
+      "Use verbs for actions: 'Scan a receipt', 'Add a field'.",
+      "Keep schema keys and values in their stored form."
+    ],
+    "avoid": ["accuracy promises", "'AI-powered' or 'magic' claims", "unlock / revolutionize language"]
+  },
+  "links": {
+    "website": "https://github.com/reggie-db/vision-flow",
+    "repository": "https://github.com/reggie-db/vision-flow",
+    "documentation": "https://github.com/reggie-db/vision-flow/tree/main/docs/branding"
+  }
+}

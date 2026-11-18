@@ -36,6 +36,7 @@ export async function migrateRegistry(pool: Pool): Promise<void> {
         description TEXT NOT NULL,
         status TEXT NOT NULL,
         active_schema_version INTEGER NOT NULL DEFAULT 1,
+        capture_guide TEXT NOT NULL DEFAULT 'vertical',
         table_name TEXT NOT NULL,
         uc_table TEXT NOT NULL,
         volume_directory TEXT NOT NULL,
@@ -51,6 +52,9 @@ export async function migrateRegistry(pool: Pool): Promise<void> {
     );
     await client.query(`ALTER TABLE ${meta}.categories ALTER COLUMN display_name SET NOT NULL`);
     await client.query(`ALTER TABLE ${meta}.categories ADD COLUMN IF NOT EXISTS dashboard_plan JSONB`);
+    await client.query(
+      `ALTER TABLE ${meta}.categories ADD COLUMN IF NOT EXISTS capture_guide TEXT NOT NULL DEFAULT 'vertical'`,
+    );
     await client.query(`
       CREATE TABLE IF NOT EXISTS ${meta}.schema_versions (
         category_id UUID NOT NULL REFERENCES ${meta}.categories(id) ON DELETE CASCADE,

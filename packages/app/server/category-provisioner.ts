@@ -1,5 +1,5 @@
 import { withAdvisoryTransactionLock } from '@dbx-tools/postgres';
-import type { Category, CategoryContract } from '../shared/vision-contracts.ts';
+import type { CaptureGuide, Category, CategoryContract } from '../shared/vision-contracts.ts';
 import { config } from './config.ts';
 import { ensureCategoryDashboard, refreshVisionDashboard } from './dashboard-manager.ts';
 import { database } from './database.ts';
@@ -17,6 +17,7 @@ import {
   deleteCategory as deleteCategoryRecord,
   renameCategory as renameCategoryRecord,
   setCategoryStatus,
+  setCategoryCaptureGuide,
 } from './registry.ts';
 import {
   DEFAULT_CATEGORY_CONTRACT,
@@ -32,6 +33,7 @@ interface ProvisionSpec {
   displayName: string;
   slug: string;
   description: string;
+  captureGuide: CaptureGuide;
   contract: CategoryContract;
   prompt: string;
   embedding?: number[];
@@ -91,6 +93,9 @@ async function provisionSpec(spec: ProvisionSpec, operationId?: string): Promise
   const existing = await findCategoryByFingerprint(fingerprint);
   if (existing) {
     await addPrompt(existing.id, spec.prompt);
+    if (existing.captureGuide !== spec.captureGuide) {
+      await setCategoryCaptureGuide(existing.id, spec.captureGuide);
+    }
     if (existing.status !== 'ready') return finishProvisioning(existing.id, existing.slug, operationId);
     emit(operationId, {
       stage: 'updating_genie',
@@ -113,7 +118,7 @@ async function provisionSpec(spec: ProvisionSpec, operationId?: string): Promise
       categorySlug: existing.slug,
     });
     if (operationId) completeOperation(operationId, existing.id);
-    return existing;
+    return (await getCategory(existing.id)) ?? existing;
   }
 
   const slug = normalizeSlug(spec.slug);
@@ -136,6 +141,7 @@ async function provisionSpec(spec: ProvisionSpec, operationId?: string): Promise
       displayName: humanReadableDisplayName(spec.displayName),
       slug,
       description,
+      captureGuide: spec.captureGuide,
       fingerprint,
       contract: spec.contract,
       extractionSchema,
@@ -150,6 +156,9 @@ async function provisionSpec(spec: ProvisionSpec, operationId?: string): Promise
     const duplicate = await findCategoryByFingerprint(fingerprint);
     if (!duplicate) throw new Error('The matching category was created concurrently but could not be loaded.');
     await addPrompt(duplicate.id, spec.prompt);
+    if (duplicate.captureGuide !== spec.captureGuide) {
+      await setCategoryCaptureGuide(duplicate.id, spec.captureGuide);
+    }
     if (duplicate.status !== 'ready') return finishProvisioning(duplicate.id, duplicate.slug, operationId);
     emit(operationId, {
       stage: 'ready',
@@ -158,7 +167,7 @@ async function provisionSpec(spec: ProvisionSpec, operationId?: string): Promise
       categorySlug: duplicate.slug,
     });
     if (operationId) completeOperation(operationId, duplicate.id);
-    return duplicate;
+    return (await getCategory(duplicate.id)) ?? duplicate;
   }
 
   return finishProvisioning(categoryId, slug, operationId);
@@ -168,11 +177,15 @@ export async function provisionCategoryFromPrompt(
   operationId: string,
   prompt: string,
   requestedDisplayName?: string,
+  requestedCaptureGuide?: CaptureGuide,
 ): Promise<void> {
   try {
     emit(operationId, { stage: 'resolving', message: 'Resolving the requested image type and required fields.' });
     const exact = await findCategoryByPrompt(prompt);
     if (exact?.status === 'ready') {
+      if (requestedCaptureGuide && exact.captureGuide !== requestedCaptureGuide) {
+        await setCategoryCaptureGuide(exact.id, requestedCaptureGuide);
+      }
       emit(operationId, {
         stage: 'updating_dashboard',
         message: 'Refreshing the shared Vision Flow dashboard.',
@@ -195,6 +208,7 @@ export async function provisionCategoryFromPrompt(
           displayName: exact.displayName,
           slug: exact.slug,
           description: exact.description,
+          captureGuide: requestedCaptureGuide ?? exact.captureGuide,
           contract: exact.contract,
           prompt,
         },
@@ -216,7 +230,7 @@ export async function provisionCategoryFromPrompt(
           ? 'Comparing the proposed schema with full-text and semantic matches.'
           : 'No existing schema matched; drafting a new immutable schema.',
     });
-    const decision = await decideCategory(prompt, candidates);
+    const decision = await decideCategory(prompt, candidates, requestedCaptureGuide);
     if (decision.action === 'clarify') throw new Error(decision.clarification ?? 'The requested category needs more detail.');
     if (!decision.contract) throw new Error('The model did not return a complete extraction contract.');
 
@@ -229,6 +243,7 @@ export async function provisionCategoryFromPrompt(
             displayName: matched.displayName,
             slug: matched.slug,
             description: matched.description,
+            captureGuide: requestedCaptureGuide ?? decision.captureGuide,
             contract: matched.contract,
             prompt,
           },
@@ -243,6 +258,7 @@ export async function provisionCategoryFromPrompt(
         displayName: requestedDisplayName ?? decision.displayName ?? decision.description ?? 'Extraction schema',
         slug: decision.categorySlug ?? `image_${proposedFingerprint.slice(0, 8)}`,
         description: decision.description ?? decision.contract.documentIntent,
+        captureGuide: requestedCaptureGuide ?? decision.captureGuide,
         contract: decision.contract,
         prompt,
         embedding: promptEmbedding,
@@ -267,6 +283,7 @@ export async function ensureDefaultCategory(): Promise<Category> {
     displayName: 'Machine sales',
     slug: DEFAULT_CATEGORY_SLUG,
     description: 'Machine-generated sales image with jurisdiction, quantity sold, price, date, and optional location details.',
+    captureGuide: 'vertical',
     contract: DEFAULT_CATEGORY_CONTRACT,
     prompt: 'Machine sales image with jurisdiction, quantity sold, price, date, and address when present.',
   });

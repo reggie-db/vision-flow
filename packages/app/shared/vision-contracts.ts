@@ -2,6 +2,8 @@ import { z } from 'zod';
 
 export const MAX_IMAGE_DATA_URL_LENGTH = 8_000_000;
 
+export const CaptureGuideSchema = z.enum(['vertical', 'horizontal', 'none']);
+
 export const ScalarFieldTypeSchema = z.enum(['string', 'integer', 'number', 'currency', 'boolean', 'date']);
 
 export const ScalarFieldSchema = z.object({
@@ -47,6 +49,7 @@ export const CategorySchema = z.object({
   description: z.string(),
   status: CategoryStatusSchema,
   activeSchemaVersion: z.number().int().positive(),
+  captureGuide: CaptureGuideSchema,
   contract: CategoryContractSchema,
   tableName: z.string(),
   ucTable: z.string(),
@@ -65,7 +68,12 @@ export const CategorySchema = z.object({
 export const CategoryResolveRequestSchema = z.object({
   displayName: z.string().trim().min(1).max(100).optional(),
   prompt: z.string().min(3).max(2_000),
+  captureGuide: CaptureGuideSchema.optional(),
   idempotencyKey: z.string().min(8).max(200),
+});
+
+export const CaptureGuideRequestSchema = z.object({
+  captureGuide: CaptureGuideSchema,
 });
 
 export const CategoryRenameRequestSchema = z.object({
@@ -134,6 +142,7 @@ export const UploadResponseSchema = z.discriminatedUnion('status', [
 ]);
 
 export type ArrayField = z.infer<typeof ArrayFieldSchema>;
+export type CaptureGuide = z.infer<typeof CaptureGuideSchema>;
 export type Category = z.infer<typeof CategorySchema>;
 export type CategoryContract = z.infer<typeof CategoryContractSchema>;
 export type ContractField = z.infer<typeof ContractFieldSchema>;

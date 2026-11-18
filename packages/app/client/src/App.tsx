@@ -24,6 +24,7 @@ import {
   SheetTitle,
   Textarea,
 } from '@databricks/appkit-ui/react';
+import { BrandIcon } from '@dbx-tools/ui/branding/react';
 import { MastraAssistant, useMastraAssistant } from '@dbx-tools/ui-mastra/react';
 import {
   useEffect,
@@ -34,10 +35,12 @@ import {
   type PointerEvent as ReactPointerEvent,
 } from 'react';
 import {
+  CaptureGuideSchema,
   CategorySchema,
   OperationEventSchema,
   UploadResponseSchema,
   type Category,
+  type CaptureGuide,
   type ImageGateResult,
   type OperationEvent,
   type UploadResponse,
@@ -167,20 +170,22 @@ function ScannerExperience() {
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [newSchemaName, setNewSchemaName] = useState('');
   const [schemaPrompt, setSchemaPrompt] = useState('');
+  const [newCaptureGuide, setNewCaptureGuide] = useState<CaptureGuide | 'auto'>('auto');
   const [renameValue, setRenameValue] = useState('');
+  const [guideSaving, setGuideSaving] = useState(false);
   const [operationEvents, setOperationEvents] = useState<OperationEvent[]>([]);
   const [operationKind, setOperationKind] = useState<OperationKind | null>(null);
   const [scanState, setScanState] = useState<ScanState>('scanning');
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [gate, setGate] = useState<ImageGateResult | null>(null);
   const [focusPoint, setFocusPoint] = useState<{ id: number; x: number; y: number } | null>(null);
-  const { analysis, cameraError, cameraReady, captureImage, mirrorPreview, nativePreview, refocusAt } =
-    useDocumentCamera({ videoRef });
-
   const selectedCategory = useMemo(
     () => categories.find((category) => category.id === selectedCategoryId) ?? categories[0],
     [categories, selectedCategoryId],
   );
+  const captureGuide = selectedCategory?.captureGuide ?? 'vertical';
+  const { analysis, cameraError, cameraReady, captureImage, mirrorPreview, nativePreview, refocusAt } =
+    useDocumentCamera({ captureGuide, videoRef });
 
   const loadCategories = async (preferredId?: string) => {
     try {
@@ -318,12 +323,14 @@ function ScannerExperience() {
       'POST',
       {
         ...(newSchemaName.trim() ? { displayName: newSchemaName.trim() } : {}),
+        ...(newCaptureGuide === 'auto' ? {} : { captureGuide: newCaptureGuide }),
         prompt,
         idempotencyKey: crypto.randomUUID(),
       },
       (event) => {
         setNewSchemaName('');
         setSchemaPrompt('');
+        setNewCaptureGuide('auto');
         setCreateOpen(false);
         void loadCategories(event.categoryId);
       },
@@ -366,6 +373,28 @@ function ScannerExperience() {
     }
   };
 
+  const updateCaptureGuide = async (value: string) => {
+    if (!selectedCategory) return;
+    const nextCaptureGuide = CaptureGuideSchema.parse(value);
+    setGuideSaving(true);
+    try {
+      const response = await fetch(`/api/categories/${selectedCategory.id}/capture-guide`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ captureGuide: nextCaptureGuide }),
+      });
+      if (!response.ok) throw await responseError(response, 'The capture guide could not be updated.');
+      const payload = (await response.json()) as { category: unknown };
+      const updated = CategorySchema.parse(payload.category);
+      setCategories((current) => current.map((category) => (category.id === updated.id ? updated : category)));
+      setCategoriesError(null);
+    } catch (error) {
+      setCategoriesError(error instanceof Error ? error.message : 'The capture guide could not be updated.');
+    } finally {
+      setGuideSaving(false);
+    }
+  };
+
   const handleRefocus = (event: ReactPointerEvent<HTMLDivElement>) => {
     if (!cameraReady || scanState !== 'scanning') return;
     const bounds = event.currentTarget.getBoundingClientRect();
@@ -389,6 +418,7 @@ function ScannerExperience() {
       <div ref={setPortalContainer} className="scanner">
         <ResourceStatusIndicator position="top-center" />
         <header className="app-bar">
+            <BrandIcon className="app-bar-mark" mode="dark" alt="Vision Flow" />
             <Select
               value={selectedCategory?.id ?? ''}
               onValueChange={(value) => {
@@ -446,7 +476,18 @@ function ScannerExperience() {
               </div>
             ) : scanState === 'scanning' ? (
               <>
-                <div className={`focus-box ${guideState}`} aria-hidden="true" />
+                {captureGuide === 'none' ? null : (
+                  <div
+                    className={`focus-box ${captureGuide} ${guideState}`}
+                    style={{
+                      left: `${analysis.bounds.x * 100}%`,
+                      top: `${analysis.bounds.y * 100}%`,
+                      width: `${analysis.bounds.width * 100}%`,
+                      height: `${analysis.bounds.height * 100}%`,
+                    }}
+                    aria-hidden="true"
+                  />
+                )}
                 {focusPoint ? (
                   <span
                     key={focusPoint.id}
@@ -552,6 +593,24 @@ function ScannerExperience() {
                 </div>
               </section>
 
+              <section className="settings-section">
+                <h3>Capture guide</h3>
+                <Select
+                  value={selectedCategory.captureGuide}
+                  onValueChange={(value) => void updateCaptureGuide(value)}
+                  disabled={operationBusy || guideSaving}
+                >
+                  <SelectTrigger className="guide-select-trigger" aria-label="Capture guide">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="vertical">Vertical</SelectItem>
+                    <SelectItem value="horizontal">Horizontal</SelectItem>
+                    <SelectItem value="none">None</SelectItem>
+                  </SelectContent>
+                </Select>
+              </section>
+
               <section className="settings-actions" aria-label="Schema actions">
                 <Button
                   variant="outline"
@@ -644,6 +703,25 @@ function ScannerExperience() {
               disabled={operationBusy}
               rows={5}
             />
+            <label className="create-field">
+              <span>Capture guide</span>
+              <Select
+                value={newCaptureGuide}
+                onValueChange={(value) =>
+                  setNewCaptureGuide(value === 'auto' ? 'auto' : CaptureGuideSchema.parse(value))
+                }
+              >
+                <SelectTrigger aria-label="Capture guide">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="auto">Automatic</SelectItem>
+                  <SelectItem value="vertical">Vertical</SelectItem>
+                  <SelectItem value="horizontal">Horizontal</SelectItem>
+                  <SelectItem value="none">None</SelectItem>
+                </SelectContent>
+              </Select>
+            </label>
             {lastOperation && operationKind === 'create' ? (
               <div className={`operation-status ${lastOperation.stage}`} role="status" aria-live="polite">
                 <span aria-hidden="true" />

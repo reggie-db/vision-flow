@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" fill="none" role="img" aria-label="Vision Flow">
+  <rect x="9" y="19" width="45" height="36" rx="3" stroke="#1B3139" stroke-width="4"/>
+  <rect x="7" y="7" width="28" height="14" rx="3" fill="#FF3621"/>
+  <path d="M13 14h11" stroke="#FFFFFF" stroke-width="3" stroke-linecap="round"/>
+  <path d="M27.5 14h2" stroke="#FFFFFF" stroke-width="3" stroke-linecap="round"/>
+  <g fill="#FFFFFF" stroke="#1B3139" stroke-width="3">
+    <rect x="49.5" y="14.5" width="9" height="9" rx="1.5"/><rect x="49.5" y="50.5" width="9" height="9" rx="1.5"/><rect x="4.5" y="50.5" width="9" height="9" rx="1.5"/>
+  </g>
+  <path d="M22 37.5l6 6 13-13" stroke="#1B3139" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

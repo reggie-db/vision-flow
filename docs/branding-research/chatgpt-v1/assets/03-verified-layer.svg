@@ -1,0 +1,49 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="720" viewBox="0 0 1200 720" role="img" aria-labelledby="title desc">
+  <title id="title">Vision Flow, Verified Layer branding concept</title>
+  <desc id="desc">A nested coral and teal frame with check path, Vision Flow wordmark, traceability states, and palette.</desc>
+  <rect width="1200" height="720" fill="#F7F8F8"/>
+  <rect x="48" y="48" width="1104" height="624" rx="12" fill="#FFFFFF" stroke="#D9E0E1"/>
+  <g transform="translate(92 92)">
+    <path d="M0 0h148v148H0z" fill="none" stroke="#E6402D" stroke-width="14"/>
+    <path d="M30 30h88v88H30z" fill="none" stroke="#087E78" stroke-width="10"/>
+    <path d="M53 77l17 17 37-43" fill="none" stroke="#1B3139" stroke-width="11" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M111 128h37v20h-57" fill="#FFFFFF"/>
+  </g>
+  <text x="286" y="158" fill="#1B3139" font-family="Arial, sans-serif" font-size="60" font-weight="700">Vision Flow</text>
+  <text x="288" y="201" fill="#087E78" font-family="Arial, sans-serif" font-size="21" font-weight="700" letter-spacing="2">GOVERNED VISUAL EXTRACTION</text>
+  <line x1="92" y1="270" x2="1108" y2="270" stroke="#D9E0E1"/>
+  <text x="92" y="329" fill="#1B3139" font-family="Arial, sans-serif" font-size="34" font-weight="700">Structured extraction with a review trail.</text>
+  <text x="92" y="370" fill="#64747C" font-family="Arial, sans-serif" font-size="20">Preserve the schema, source, confidence, and review state for each result.</text>
+  <g transform="translate(92 423)" font-family="Arial, sans-serif">
+    <rect width="730" height="174" rx="10" fill="#F7F8F8" stroke="#D9E0E1"/>
+    <line x1="48" y1="50" x2="682" y2="50" stroke="#BFC9CC" stroke-width="4"/>
+    <g font-size="14" font-weight="700" text-anchor="middle">
+      <circle cx="48" cy="50" r="14" fill="#E6402D"/>
+      <circle cx="176" cy="50" r="14" fill="#E6402D"/>
+      <circle cx="304" cy="50" r="14" fill="#087E78"/>
+      <circle cx="432" cy="50" r="14" fill="#087E78"/>
+      <circle cx="560" cy="50" r="14" fill="#1B3139"/>
+      <circle cx="682" cy="50" r="14" fill="#B86E00"/>
+      <text x="48" y="91" fill="#1B3139">SOURCE</text>
+      <text x="176" y="91" fill="#1B3139">GATE</text>
+      <text x="304" y="91" fill="#1B3139">SCHEMA</text>
+      <text x="432" y="91" fill="#1B3139">MODEL</text>
+      <text x="560" y="91" fill="#1B3139">RECORD</text>
+      <text x="682" y="91" fill="#1B3139">REVIEW</text>
+    </g>
+    <g font-size="14" fill="#64747C">
+      <text x="24" y="137">schema</text><text x="96" y="137" fill="#087E78" font-family="monospace">store-layout/v3</text>
+      <text x="290" y="137">fingerprint</text><text x="378" y="137" fill="#087E78" font-family="monospace">9f14…a03c</text>
+      <text x="536" y="137">state</text><text x="580" y="137" fill="#B86E00" font-weight="700">NEEDS REVIEW</text>
+    </g>
+  </g>
+  <g transform="translate(872 423)" font-family="Arial, sans-serif">
+    <text fill="#1B3139" font-size="16" font-weight="700">CORE PALETTE</text>
+    <rect y="28" width="76" height="64" rx="7" fill="#E6402D"/>
+    <rect x="88" y="28" width="76" height="64" rx="7" fill="#087E78"/>
+    <rect x="176" y="28" width="76" height="64" rx="7" fill="#1B3139"/>
+    <rect y="104" width="76" height="64" rx="7" fill="#B86E00"/>
+    <rect x="88" y="104" width="76" height="64" rx="7" fill="#64747C"/>
+    <rect x="176" y="104" width="76" height="64" rx="7" fill="#F7F8F8" stroke="#D9E0E1"/>
+  </g>
+</svg>

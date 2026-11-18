@@ -1,5 +1,12 @@
 import { useCallback, useEffect, useRef, useState, type RefObject } from 'react';
-import { analyzeFocus, type FocusAnalysis, type FocusBounds } from '../lib/focus.ts';
+import type { CaptureGuide } from '../../../shared/vision-contracts.ts';
+import {
+  analyzeFocus,
+  captureGuideBounds,
+  initialFocusAnalysis,
+  type FocusAnalysis,
+  type FocusBounds,
+} from '../lib/focus.ts';
 
 interface AndroidFocusState {
   bounds?: FocusBounds;
@@ -22,6 +29,7 @@ declare global {
 }
 
 interface UseDocumentCameraOptions {
+  captureGuide: CaptureGuide;
   videoRef: RefObject<HTMLVideoElement | null>;
 }
 
@@ -34,13 +42,6 @@ interface DocumentCameraState {
   nativePreview: boolean;
   refocusAt(x: number, y: number): Promise<boolean>;
 }
-
-const INITIAL_ANALYSIS: FocusAnalysis = {
-  bounds: { x: 0.19, y: 0.05, width: 0.62, height: 0.78 },
-  focused: false,
-  documentDetected: false,
-  score: 0,
-};
 
 interface FrameCrop {
   height: number;
@@ -92,13 +93,17 @@ function drawVisibleFrame(
 }
 
 /** Use Android autofocus metadata when available and canvas analysis everywhere else. */
-export function useDocumentCamera({ videoRef }: UseDocumentCameraOptions): DocumentCameraState {
-  const [analysis, setAnalysis] = useState(INITIAL_ANALYSIS);
+export function useDocumentCamera({ captureGuide, videoRef }: UseDocumentCameraOptions): DocumentCameraState {
+  const [analysis, setAnalysis] = useState(() => initialFocusAnalysis(captureGuide));
   const [cameraError, setCameraError] = useState<string | null>(null);
   const [cameraReady, setCameraReady] = useState(false);
   const [mirrorPreview, setMirrorPreview] = useState(false);
   const streamRef = useRef<MediaStream | null>(null);
   const nativePreview = Boolean(window.AndroidDocumentCamera);
+
+  useEffect(() => {
+    setAnalysis(initialFocusAnalysis(captureGuide));
+  }, [captureGuide]);
 
   useEffect(() => {
     if (nativePreview) return;
@@ -174,7 +179,7 @@ export function useDocumentCamera({ videoRef }: UseDocumentCameraOptions): Docum
         const focus = await bridge.focusState();
         if (!cancelled) {
           setAnalysis({
-            bounds: focus.bounds ?? INITIAL_ANALYSIS.bounds,
+            bounds: captureGuideBounds(captureGuide),
             focused: focus.focused,
             documentDetected: focus.focused,
             score: focus.score ?? 0,
@@ -193,10 +198,10 @@ export function useDocumentCamera({ videoRef }: UseDocumentCameraOptions): Docum
       if (timer) window.clearTimeout(timer);
       void bridge.stopPreview();
     };
-  }, [nativePreview]);
+  }, [captureGuide, nativePreview]);
 
   useEffect(() => {
-    if (nativePreview) return;
+    if (nativePreview || captureGuide === 'none') return;
 
     const canvas = document.createElement('canvas');
     canvas.width = 180;
@@ -214,7 +219,7 @@ export function useDocumentCamera({ videoRef }: UseDocumentCameraOptions): Docum
         const analysisHeight = Math.max(160, Math.min(280, Math.round(canvas.width / (displayAspect || 0.75))));
         if (canvas.height !== analysisHeight) canvas.height = analysisHeight;
         drawVisibleFrame(context, source, canvas.width, canvas.height);
-        setAnalysis(analyzeFocus(context.getImageData(0, 0, canvas.width, canvas.height)));
+        setAnalysis(analyzeFocus(context.getImageData(0, 0, canvas.width, canvas.height), captureGuideBounds(captureGuide)));
       }
       if (!cancelled) timer = window.setTimeout(inspect, 220);
     };
@@ -224,7 +229,7 @@ export function useDocumentCamera({ videoRef }: UseDocumentCameraOptions): Docum
       cancelled = true;
       if (timer) window.clearTimeout(timer);
     };
-  }, [nativePreview, videoRef]);
+  }, [captureGuide, nativePreview, videoRef]);
 
   const captureImage = useCallback(async (): Promise<string> => {
     const bridge = window.AndroidDocumentCamera;

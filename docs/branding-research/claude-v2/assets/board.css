@@ -1,0 +1,133 @@
+/* Shared layout for the Vision Flow concept boards. Package colors come from :root vars. */
+* { box-sizing: border-box; }
+html, body { margin: 0; background: var(--bg); color: var(--ink); }
+body { font: 400 15px/1.45 "DM Sans", ui-sans-serif, system-ui, sans-serif; -webkit-font-smoothing: antialiased; }
+.mono, pre, code, .code { font-family: "DM Mono", ui-monospace, monospace; }
+.muted { color: var(--muted); }
+.small { font-size: 12.5px; }
+.sp { flex: 1; }
+b { font-weight: 600; }
+
+.board { width: 1600px; padding: 56px 64px 64px; display: grid; gap: 40px; }
+
+/* header */
+.top { display: grid; grid-template-columns: 1fr auto; grid-template-rows: auto auto; gap: 20px 32px; align-items: center; }
+.tag { grid-column: 1 / -1; grid-row: 1; justify-self: end; font: 500 12px "DM Mono", monospace; letter-spacing: .04em; text-transform: uppercase; color: var(--muted); }
+.lockup { grid-row: 2; display: flex; align-items: center; gap: 20px; }
+.m72 { width: 72px; height: 72px; } .m40 { width: 40px; height: 40px; } .m24 { width: 24px; height: 24px; }
+.wordmark { font-weight: 700; font-size: 52px; letter-spacing: -0.02em; line-height: 1; }
+.wordmark.sm { font-size: 22px; }
+.descriptor { margin-top: 8px; font-size: 17px; color: var(--muted); }
+.variants { grid-row: 2; display: flex; gap: 12px; }
+.var { display: flex; align-items: center; gap: 12px; padding: 14px 18px; border-radius: 10px; border: 1px solid var(--line); background: var(--surface); }
+.var.dark { background: var(--dark); color: #fff; border-color: transparent; }
+.var.fav { gap: 10px; }
+.theme-dark .mono-img { filter: invert(1); }
+
+/* intro */
+.intro h1 { margin: 0 0 10px; font-size: 44px; font-weight: 700; letter-spacing: -0.02em; line-height: 1.1; }
+.intro p { margin: 0; max-width: 820px; font-size: 19px; color: var(--muted); }
+
+/* blocks */
+.cols3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
+.block, .tile { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 22px; }
+h4 { margin: 0 0 14px; font: 500 12px "DM Mono", monospace; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
+h4.sec { margin-bottom: 14px; }
+h3 { margin: 14px 0 4px; font-size: 18px; font-weight: 700; }
+.lbl { display: block; font: 500 11px "DM Mono", monospace; letter-spacing: .05em; text-transform: uppercase; color: var(--muted); margin-bottom: 6px; }
+
+.swatches { display: grid; grid-template-columns: 1fr 1fr; gap: 12px 14px; }
+.sw { display: flex; gap: 10px; align-items: flex-start; font-size: 13px; line-height: 1.3; }
+.sw .mono { font-size: 11.5px; color: var(--muted); }
+.sw .muted { font-size: 12px; }
+.chipc { flex: none; width: 36px; height: 36px; border-radius: 8px; border: 1px solid var(--line); }
+
+.spec-h { font-size: 30px; font-weight: 700; letter-spacing: -0.015em; }
+.spec-b { margin: 6px 0 12px; font-size: 15px; }
+.spec-m { font: 400 14px "DM Mono", monospace; padding: 8px 10px; border-radius: 6px; background: var(--surface-2); }
+
+.say, .avoid { display: grid; gap: 4px; font-size: 14px; }
+.say div::before { content: "✓ "; color: var(--ok); font-weight: 700; }
+.avoid { margin-top: 14px; }
+.avoid div { color: var(--muted); text-decoration: line-through; text-decoration-color: var(--accent); }
+
+/* tiles */
+.well { background: var(--surface-2); border-radius: 8px; padding: 10px; display: grid; place-items: center; }
+.art { width: 100%; height: 200px; display: block; }
+.kv { margin: 12px 0 0; display: grid; gap: 0; }
+.kv div { display: flex; justify-content: space-between; gap: 12px; padding: 6px 0; border-top: 1px solid var(--line); font-size: 13px; }
+.kv dt { font-family: "DM Mono", monospace; color: var(--muted); }
+.kv dd { margin: 0; font-family: "DM Mono", monospace; font-weight: 500; }
+.tile p { margin: 0; font-size: 14px; }
+
+.chip { display: inline-flex; align-items: center; height: 22px; padding: 0 9px; border-radius: 999px; font: 600 12px "DM Sans", sans-serif; background: var(--surface-2); color: var(--ink); white-space: nowrap; }
+.chip.ok { background: color-mix(in srgb, var(--ok) 14%, transparent); color: var(--ok); }
+.chip.warn { background: #FFAB0029; color: var(--warn); }
+
+.btn { font: 600 14px "DM Sans", sans-serif; height: 38px; padding: 0 16px; border-radius: 6px; border: 1px solid var(--accent); background: var(--accent); color: var(--accent-ink); }
+.btn.ghost { background: transparent; color: var(--ink); border-color: var(--line); }
+.btn.ghost.bad { color: var(--bad, var(--accent)); }
+
+/* ---------- 01 Field Lines UI ---------- */
+.ui { display: grid; gap: 20px; }
+.ui-01 { grid-template-columns: 420px 1fr; }
+.cam { background: #161D29; border-radius: 14px; overflow: hidden; color: #fff; display: grid; grid-template-rows: auto 1fr auto; }
+.cam-bar { display: flex; align-items: center; gap: 10px; padding: 14px 16px; font-size: 15px; }
+.cam-bar .pill { font: 500 12px "DM Mono", monospace; padding: 3px 8px; border-radius: 999px; background: rgb(255 255 255 / 12%); }
+.cam-bar .dot { width: 10px; height: 10px; border-radius: 50%; background: #35C979; }
+.cam-view { padding: 6px 30px; } .cam-view .art { height: 300px; }
+.cam-foot { display: grid; place-items: center; padding: 16px; }
+.shutter { width: 58px; height: 58px; border-radius: 50%; border: 4px solid #fff; box-shadow: inset 0 0 0 4px #161D29; background: #fff; }
+.result { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 24px 28px; display: grid; align-content: start; gap: 14px; }
+.result-head { display: flex; align-items: center; justify-content: space-between; font-size: 20px; }
+.steps { list-style: none; margin: 0; padding: 0; display: flex; gap: 8px; }
+.steps li { flex: 1; font-size: 13px; font-weight: 600; padding-top: 8px; border-top: 3px solid var(--line); color: var(--muted); }
+.steps li.done { border-color: var(--accent); color: var(--ink); }
+.kv.big div { font-size: 15px; padding: 10px 0; }
+.result .btn { justify-self: start; }
+
+/* ---------- 02 Schema Aperture ---------- */
+.pkg-02 .code { margin: 0; padding: 12px 14px; border-radius: 8px; background: var(--dark); font-size: 12.5px; line-height: 1.6; white-space: pre; overflow: hidden; }
+.pkg-02 .k { color: var(--muted); } .pkg-02 .s { color: var(--schema); } .pkg-02 .c { color: var(--ok); }
+.flow3 { display: grid; grid-template-columns: 130px 18px 1fr; align-items: center; gap: 8px; }
+.well.small { padding: 6px; } .well.small .art { height: 120px; }
+.arrow { color: var(--accent); font-weight: 700; font-size: 18px; text-align: center; }
+.prompt { margin-top: 10px !important; padding: 10px 12px; border-left: 3px solid var(--accent); background: var(--surface-2); border-radius: 0 6px 6px 0; font-size: 13.5px !important; color: var(--ink); }
+.ui-02 { grid-template-columns: 380px 1fr; }
+.pane { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; overflow: hidden; }
+.pane-head { display: flex; align-items: center; gap: 10px; padding: 14px 18px; border-bottom: 1px solid var(--line); font-size: 16px; }
+.pane-head .muted { font-size: 12.5px; }
+.schemas { list-style: none; margin: 0; padding: 8px; }
+.schemas li { display: flex; justify-content: space-between; padding: 11px 12px; border-radius: 8px; font-size: 13.5px; }
+.schemas li.on { background: var(--surface-2); box-shadow: inset 3px 0 0 var(--accent); }
+.schemas li.add { color: var(--accent); font-weight: 600; }
+.tbl { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+.tbl th { text-align: left; font: 500 11px "DM Mono", monospace; letter-spacing: .05em; text-transform: uppercase; color: var(--muted); padding: 10px 18px; border-bottom: 1px solid var(--line); }
+.tbl td { padding: 10px 18px; border-bottom: 1px solid var(--line); font-family: "DM Mono", monospace; }
+.tbl td:last-child { font-family: "DM Sans", sans-serif; color: var(--muted); }
+.gen { margin: 16px 18px 18px; padding: 12px 14px; border-radius: 8px; background: var(--dark); font: 400 13px/1.55 "DM Mono", monospace; color: var(--ink); }
+
+/* ---------- 03 Evidence Box ---------- */
+.tile-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.tile-head h3 { margin-bottom: 0; }
+.tile-head + p { margin-top: 4px !important; }
+.conf { list-style: none; margin: 12px 0 0; padding: 0; display: grid; gap: 6px; }
+.conf li { display: grid; grid-template-columns: 1fr 90px 34px; align-items: center; gap: 10px; font-size: 12.5px; }
+.conf .bar { height: 6px; border-radius: 3px; background: var(--surface-2); overflow: hidden; }
+.conf .bar i { display: block; height: 100%; background: var(--ok); }
+.conf li.low .bar i { background: #FFAB00; }
+.conf li.low .mono { color: var(--warn); font-weight: 500; }
+.conf .n { text-align: right; color: var(--muted); }
+.ui-03 { grid-template-columns: 300px 1fr 420px; background: var(--surface-2); border: 1px solid var(--line); border-radius: 14px; padding: 16px; }
+.queue, .detail { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; }
+.q-head, .d-head { display: flex; align-items: center; gap: 10px; padding: 14px 16px; border-bottom: 1px solid var(--line); font-size: 16px; }
+.queue ul { list-style: none; margin: 0; padding: 8px; }
+.queue li { display: grid; padding: 10px 12px; border-radius: 8px; font-size: 13.5px; }
+.queue li.on { background: var(--surface-2); box-shadow: inset 3px 0 0 #FFAB00; }
+.queue li .muted { font-family: "DM Mono", monospace; font-size: 12px; }
+.viewer { display: grid; place-items: center; } .viewer .art { height: 320px; }
+.detail { padding-bottom: 16px; }
+.detail label { display: block; margin: 14px 16px 6px; font: 500 11px "DM Mono", monospace; letter-spacing: .05em; text-transform: uppercase; color: var(--muted); }
+.detail .input { margin: 0 16px; padding: 9px 12px; border: 1px solid var(--line); border-radius: 6px; font-size: 14px; }
+.detail .evidence { margin: 0 16px; padding: 9px 12px; background: var(--surface-2); border-radius: 6px; font-size: 13px; }
+.actions { display: flex; gap: 8px; margin: 18px 16px 0; }

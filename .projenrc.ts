@@ -109,6 +109,8 @@ project.applyToProjects(rootProject, { path: "packages/app" }, (app) => {
     "@dbx-tools/tunnel@^0.9.210",
     "@dbx-tools/ui@^0.9.210",
     "@dbx-tools/ui-mastra@^0.9.210",
+    "@fontsource-variable/dm-sans@^5.3.0",
+    "@fontsource/dm-mono@^5.3.0",
     "@mlflow/core@0.4.0",
     "pg@^8.22.0",
     "react@~19.2.4",

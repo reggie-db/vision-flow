@@ -1,0 +1,22 @@
+/* Vision Flow · Package 03 Evidence Box. Status colors are semantic and never decorative. */
+:root {
+  --vf-navy: #1b3139;        /* text, region outlines */
+  --vf-slate: #5a6f77;
+  --vf-white: #ffffff;
+  --vf-oat: #f9f7f4;         /* image wells, review queue background */
+  --vf-line: #e0e3e5;
+  --vf-lava: #ff3621;        /* region labels, primary action */
+  --vf-lava-hover: #e02e1b;
+  --vf-verified: #00875a;    /* accepted values */
+  --vf-review: #ffab00;      /* needs-review fill and bars */
+  --vf-review-text: #8f5f00; /* needs-review text; 5.5:1 on white */
+  --vf-rejected: #98102a;    /* mismatch or failed */
+
+  --vf-font-sans: "DM Sans", "Nunito Sans", ui-sans-serif, system-ui, sans-serif;
+  --vf-font-mono: "DM Mono", ui-monospace, monospace;
+  --vf-radius: 6px;
+  --vf-region-stroke: 2px;
+
+  --accent-red: var(--vf-lava);
+  --accent-red-hover: var(--vf-lava-hover);
+}

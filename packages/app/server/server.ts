@@ -1,5 +1,5 @@
 import { files, server } from '@databricks/appkit';
-import { appkit } from '@dbx-tools/appkit';
+import { appkit, loadBrandContext } from '@dbx-tools/appkit';
 import { agents, genie, mastra } from '@dbx-tools/appkit-mastra';
 import { email } from '@dbx-tools/email';
 import { log, toError } from '@dbx-tools/shared-core';
@@ -9,6 +9,7 @@ import {
   CategoryDeleteRequestSchema,
   CategoryRenameRequestSchema,
   CategoryResolveRequestSchema,
+  CaptureGuideRequestSchema,
   ImageUploadRequestSchema,
   type OperationEvent,
   type UploadResponse,
@@ -28,7 +29,7 @@ import {
   listOperationEvents,
   subscribeOperation,
 } from './operations.ts';
-import { deletePrompt, getCategory, getSchemaVersion, listCategories } from './registry.ts';
+import { deletePrompt, getCategory, getSchemaVersion, listCategories, setCategoryCaptureGuide } from './registry.ts';
 
 const ALLOWED_EMAIL_DOMAINS = ['@databricks.com', '@gulfinc.com'];
 const TUNNEL_ENABLED = Boolean(process.env.TUNNEL_PUBLIC_DOMAIN);
@@ -94,6 +95,9 @@ function sendSse(response: { write(chunk: string): boolean }, event: OperationEv
 await migrateRegistry(database);
 await ensureDefaultCategory();
 
+// branding/brand.json: also read by createApp, the auth gate, and email.
+const brand = await loadBrandContext();
+
 await appkit.createApp({
   plugins: [
     server({ bodyLimit: '11mb', staticPath: 'client/dist' }),
@@ -102,7 +106,6 @@ await appkit.createApp({
           email(),
           authGate({
             allow: ALLOWED_EMAIL_DOMAINS,
-            brandName: 'Vision Flow',
             gatePaths: ['/'],
           }),
         ]
@@ -118,6 +121,7 @@ await appkit.createApp({
     mastra({
       agents: { vision_data: visionDataAssistant },
       defaultAgent: 'vision_data',
+      brand,
       backgroundTurns: false,
       storage: { id: 'vision-flow-mastra', ...mastraPostgres, schemaName: 'mastra_instance' },
       memory: false,
@@ -162,7 +166,12 @@ await appkit.createApp({
         }
         const operation = await createOperation(parsed.data.prompt, parsed.data.idempotencyKey);
         if (operation.created) {
-          void provisionCategoryFromPrompt(operation.id, parsed.data.prompt, parsed.data.displayName).catch((error) => {
+          void provisionCategoryFromPrompt(
+            operation.id,
+            parsed.data.prompt,
+            parsed.data.displayName,
+            parsed.data.captureGuide,
+          ).catch((error) => {
             logger.error('category provisioning failed', { error: toError(error), operationId: operation.id });
           });
         }
@@ -186,6 +195,21 @@ await appkit.createApp({
           });
         }
         response.status(operation.created ? 202 : 200).json({ operationId: operation.id });
+      });
+
+      http.patch('/api/categories/:categoryId/capture-guide', async (request, response) => {
+        const categoryId = UuidSchema.safeParse(request.params.categoryId);
+        const parsed = CaptureGuideRequestSchema.safeParse(request.body);
+        if (!categoryId.success || !parsed.success) {
+          response.status(400).json({ error: 'A valid schema and capture guide are required.' });
+          return;
+        }
+        if (!(await setCategoryCaptureGuide(categoryId.data, parsed.data.captureGuide))) {
+          response.status(404).json({ error: 'The selected schema no longer exists.' });
+          return;
+        }
+        const category = await getCategory(categoryId.data);
+        response.json({ category });
       });
 
       http.delete('/api/categories/:categoryId', async (request, response) => {

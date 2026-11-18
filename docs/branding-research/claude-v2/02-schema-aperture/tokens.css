@@ -1,0 +1,24 @@
+/* VisionFlow · Package 02 Schema Aperture. Dark-first; light values are for docs and dashboards. */
+:root {
+  --vf-navy-900: #0b2026;    /* default app surface */
+  --vf-navy-800: #1b3139;    /* panels, code blocks */
+  --vf-navy-700: #13292f;    /* raised surface */
+  --vf-line: #2a434b;
+  --vf-text: #f9f7f4;
+  --vf-text-muted: #9db0b6;
+  --vf-lava: #ff3621;        /* image / capture, primary action */
+  --vf-lava-hover: #ff5f46;
+  --vf-schema: #6cb4ee;      /* schema names, field keys (on dark) */
+  --vf-schema-light: #2272b4;/* schema names on light surfaces */
+  --vf-row: #3fd6a0;         /* typed output, types, success on dark */
+  --vf-row-light: #00875a;
+  --vf-warn: #ffc24d;
+
+  --vf-font-sans: "DM Sans", ui-sans-serif, system-ui, sans-serif;
+  --vf-font-mono: "DM Mono", ui-monospace, monospace;
+  --vf-radius: 10px;
+
+  --accent-red: var(--vf-lava);
+  --accent-red-hover: var(--vf-lava-hover);
+  --camera-surface: var(--vf-navy-900);
+}

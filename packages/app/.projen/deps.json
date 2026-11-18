@@ -126,6 +126,16 @@
       "type": "runtime"
     },
     {
+      "name": "@fontsource-variable/dm-sans",
+      "version": "^5.3.0",
+      "type": "runtime"
+    },
+    {
+      "name": "@fontsource/dm-mono",
+      "version": "^5.3.0",
+      "type": "runtime"
+    },
+    {
       "name": "@mlflow/core",
       "version": "0.4.0",
       "type": "runtime"

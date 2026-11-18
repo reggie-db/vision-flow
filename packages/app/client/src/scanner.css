@@ -1,14 +1,35 @@
 :root {
-  color: #0b1739;
-  background: #161d29;
-  font-family: "Nunito Sans", ui-sans-serif, system-ui, sans-serif;
+  /*
+   * Identity colors and fonts come from branding/brand.json via
+   * applyBrandContext() (--brand-color-*, --brand-font-*). Status colors are
+   * semantic and stay local; see docs/branding/README.md.
+   */
+  color: var(--brand-color-foreground);
+  background: var(--camera-surface);
+  font-family: var(--brand-font-sans);
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
-  --accent-red: #cf271b;
-  --accent-red-hover: #b52217;
-  --focus-green: #35c979;
   --camera-surface: #161d29;
+  --camera-glass: rgb(10 18 31 / 74%);
+  --surface-strong: #eeede9;
+  --status-ok: #00875a;
+  --status-warn-fill: #ffab00;
+  --status-danger: #98102a;
+  --focus-green: #35c979;
+}
+
+/*
+ * Lava is the primary action color, so destructive actions use the brand's
+ * maroon to stay distinguishable. [data-brand] outranks AppKit's :root/.dark.
+ */
+:root[data-brand] {
+  --destructive: var(--status-danger);
+}
+
+::selection {
+  background: color-mix(in srgb, var(--brand-color-primary) 22%, transparent);
+  color: inherit;
 }
 
 * {
@@ -50,7 +71,7 @@ button,
 .desktop-stage {
   place-items: center;
   padding: 20px;
-  background: #eef1f5;
+  background: var(--brand-color-surface);
 }
 
 .device-shell {
@@ -65,7 +86,7 @@ button,
   padding: 16px;
   overflow: hidden;
   border-radius: 34px;
-  background: #111827;
+  background: var(--brand-color-foreground);
   box-shadow:
     0 0 0 1px rgb(15 23 42 / 16%),
     0 18px 50px -16px rgb(15 23 42 / 38%);
@@ -133,18 +154,28 @@ button,
   pointer-events: auto;
 }
 
+.app-bar-mark {
+  width: 30px;
+  height: 30px;
+  flex: none;
+  margin-right: 2px;
+  pointer-events: none;
+}
+
 .schema-select-trigger {
-  width: min(310px, calc(100vw - 92px)) !important;
+  width: auto !important;
+  max-width: 310px;
   min-width: 0 !important;
+  flex: 1 1 auto;
   height: 44px !important;
   border-color: rgb(255 255 255 / 22%) !important;
   border-radius: 12px !important;
   color: #fff !important;
-  background: rgb(10 18 31 / 74%) !important;
+  background: var(--camera-glass) !important;
   box-shadow: 0 10px 24px -14px rgb(0 0 0 / 80%) !important;
   backdrop-filter: blur(14px);
   font-size: 15px !important;
-  font-weight: 700 !important;
+  font-weight: 600 !important;
 }
 
 .schema-select-trigger svg {
@@ -152,27 +183,26 @@ button,
 }
 
 .schema-select-content {
-  border: 1px solid #cbd3df !important;
-  color: #172033 !important;
+  border: 1px solid var(--brand-color-border) !important;
+  color: var(--brand-color-foreground) !important;
   background: #fff !important;
   box-shadow: 0 18px 46px -16px rgb(15 23 42 / 48%) !important;
   backdrop-filter: none !important;
 }
 
 .schema-select-content [role="option"] {
-  color: #172033 !important;
+  color: var(--brand-color-foreground) !important;
   background: #fff !important;
-  font-weight: 650;
+  font-weight: 500;
 }
 
 .schema-select-content [role="option"][data-highlighted] {
-  color: #0b1739 !important;
-  background: #edf2f7 !important;
+  background: var(--brand-color-surface) !important;
 }
 
 .schema-select-content [role="option"][data-state="checked"] {
-  color: #0b1739 !important;
-  background: #e7edf5 !important;
+  background: var(--surface-strong) !important;
+  font-weight: 600;
 }
 
 .settings-button {
@@ -182,7 +212,7 @@ button,
   border: 1px solid rgb(255 255 255 / 22%) !important;
   border-radius: 12px !important;
   color: #fff !important;
-  background: rgb(10 18 31 / 74%) !important;
+  background: var(--camera-glass) !important;
   box-shadow: 0 10px 24px -14px rgb(0 0 0 / 80%) !important;
   backdrop-filter: blur(14px);
 }
@@ -207,7 +237,7 @@ button,
   border: 1px solid rgb(255 193 188 / 38%);
   border-radius: 10px;
   color: #fff;
-  background: rgb(135 28 21 / 88%);
+  background: color-mix(in srgb, var(--status-danger) 90%, transparent);
   font-size: 13px;
   backdrop-filter: blur(12px);
 }
@@ -240,33 +270,40 @@ button,
   background: transparent;
 }
 
+/* Brand viewfinder: four corner brackets (the mark's frame) around the capture area. */
 .focus-box {
+  --corner: 56px;
+  --guide-color: #ef3340;
   position: absolute;
-  inset:
-    max(8px, env(safe-area-inset-top))
-    max(8px, env(safe-area-inset-right))
-    max(8px, env(safe-area-inset-bottom))
-    max(8px, env(safe-area-inset-left));
   z-index: 2;
-  border: 2px solid rgb(255 255 255 / 48%);
-  border-radius: 16px;
-  box-shadow: inset 0 0 0 1px rgb(0 0 0 / 18%);
+  border: 4px solid var(--guide-color);
+  border-radius: 18px;
+  -webkit-mask: conic-gradient(at var(--corner) var(--corner), #0000 75%, #000 0) 0 0 /
+    calc(100% - var(--corner)) calc(100% - var(--corner));
+  mask: conic-gradient(at var(--corner) var(--corner), #0000 75%, #000 0) 0 0 /
+    calc(100% - var(--corner)) calc(100% - var(--corner));
+  filter:
+    drop-shadow(0 0 2px rgb(0 0 0 / 50%))
+    drop-shadow(0 0 7px color-mix(in srgb, var(--guide-color) 60%, transparent));
   pointer-events: none;
   transition:
-    border-color 120ms ease-out,
-    box-shadow 120ms ease-out;
+    border-color 140ms ease-out,
+    filter 140ms ease-out;
+}
+
+.focus-box.horizontal {
+  --corner: 42px;
 }
 
 .focus-box.detected {
-  border-color: rgb(255 255 255 / 82%);
+  --guide-color: #ff4a55;
 }
 
 .focus-box.focused {
-  border-color: var(--focus-green);
-  box-shadow:
-    inset 0 0 0 1px rgb(0 0 0 / 16%),
-    0 0 0 2px rgb(53 201 121 / 18%),
-    0 0 24px rgb(53 201 121 / 48%);
+  --guide-color: var(--focus-green);
+  filter:
+    drop-shadow(0 0 2px rgb(0 0 0 / 44%))
+    drop-shadow(0 0 8px rgb(53 201 121 / 58%));
 }
 
 .tap-focus {
@@ -367,7 +404,7 @@ button,
   border: 0 !important;
   border-radius: 50% !important;
   color: #fff !important;
-  background: var(--accent-red) !important;
+  background: var(--brand-color-primary) !important;
   box-shadow: 0 12px 28px -10px rgb(15 23 42 / 62%) !important;
   touch-action: manipulation;
 }
@@ -383,7 +420,7 @@ button,
 }
 
 .upload-button:hover {
-  background: var(--accent-red-hover) !important;
+  background: var(--brand-color-primary-hover) !important;
 }
 
 .upload-button:active {
@@ -402,7 +439,7 @@ button,
   border: 0 !important;
   border-radius: 50% !important;
   color: #fff !important;
-  background: var(--accent-red) !important;
+  background: var(--brand-color-primary) !important;
   box-shadow: 0 12px 28px -10px rgb(15 23 42 / 62%) !important;
   touch-action: manipulation;
 }
@@ -418,7 +455,7 @@ button,
 }
 
 .assistant-button:hover {
-  background: var(--accent-red-hover) !important;
+  background: var(--brand-color-primary-hover) !important;
 }
 
 .assistant-button:active {
@@ -460,7 +497,7 @@ button,
   width: 46px;
   height: 46px;
   border: 4px solid rgb(255 255 255 / 28%);
-  border-top-color: #fff;
+  border-top-color: var(--brand-color-primary);
   border-radius: 50%;
   animation: checking-spin 720ms linear infinite;
 }
@@ -485,7 +522,7 @@ button,
   gap: 12px;
   padding: 28px 24px 24px;
   border-radius: 18px;
-  color: #172033;
+  color: var(--brand-color-foreground);
   background: #fff;
   box-shadow: 0 18px 44px -18px rgb(0 0 0 / 42%);
   text-align: center;
@@ -498,30 +535,30 @@ button,
   place-items: center;
   border-radius: 50%;
   color: #fff;
-  font-size: 34px;
-  font-weight: 800;
+  font-size: 30px;
+  font-weight: 700;
   line-height: 1;
 }
 
 .result-card.success .result-icon {
-  background: var(--focus-green);
+  background: var(--status-ok);
 }
 
 .result-card.failure .result-icon {
-  background: #c0362c;
+  background: var(--status-danger);
 }
 
 .result-card h2 {
   margin: 0;
   font-size: 20px;
-  font-weight: 750;
+  font-weight: 700;
   line-height: 1.25;
   text-wrap: balance;
 }
 
 .result-card p {
   margin: 0 0 6px;
-  color: #5b6474;
+  color: var(--brand-color-muted);
   font-size: 14px;
   line-height: 1.45;
   text-wrap: pretty;
@@ -533,19 +570,19 @@ button,
   margin-top: 6px;
   border: 0 !important;
   color: #fff !important;
-  background: var(--accent-red) !important;
+  background: var(--brand-color-primary) !important;
 }
 
 .result-button:hover {
-  background: var(--accent-red-hover) !important;
+  background: var(--brand-color-primary-hover) !important;
 }
 
 .schema-sheet {
   max-height: min(86dvh, 760px) !important;
   padding-bottom: max(18px, env(safe-area-inset-bottom)) !important;
   border-radius: 20px 20px 0 0 !important;
-  border-color: #d8dee8 !important;
-  color: #172033 !important;
+  border-color: var(--brand-color-border) !important;
+  color: var(--brand-color-foreground) !important;
   background: #fff !important;
   box-shadow: 0 -18px 44px -20px rgb(0 0 0 / 46%) !important;
 }
@@ -560,7 +597,7 @@ button,
   min-height: 0;
   gap: 18px;
   overflow-y: auto;
-  padding: 2px 1px 12px;
+  padding: 2px 16px 12px;
 }
 
 .settings-section {
@@ -570,9 +607,13 @@ button,
 
 .settings-section h3 {
   margin: 0;
-  color: #344054;
+  color: var(--brand-color-muted);
   font-size: 13px;
-  font-weight: 750;
+  font-weight: 600;
+}
+
+.guide-select-trigger {
+  width: 100% !important;
 }
 
 .rename-row,
@@ -603,8 +644,8 @@ button,
   justify-content: space-between;
   gap: 12px;
   padding: 10px 12px;
-  border-radius: 9px;
-  background: #f5f7fa;
+  border-radius: 8px;
+  background: var(--brand-color-surface);
 }
 
 .field-list span,
@@ -614,13 +655,13 @@ button,
 }
 
 .field-list small {
-  color: #687386;
+  color: var(--brand-color-muted);
   white-space: nowrap;
 }
 
 .prompt-list button {
   flex: none;
-  color: #a51f17 !important;
+  color: var(--status-danger) !important;
 }
 
 .operation-status {
@@ -628,8 +669,8 @@ button,
   align-items: flex-start;
   gap: 9px;
   padding: 10px 12px;
-  border-radius: 9px;
-  background: #f3f6fb;
+  border-radius: 8px;
+  background: var(--brand-color-surface);
 }
 
 .operation-status > span {
@@ -638,20 +679,20 @@ button,
   flex: none;
   margin-top: 5px;
   border-radius: 50%;
-  background: #d99b1d;
+  background: var(--status-warn-fill);
 }
 
 .operation-status.ready > span {
-  background: #18844d;
+  background: var(--status-ok);
 }
 
 .operation-status.failed > span {
-  background: #c0362c;
+  background: var(--status-danger);
 }
 
 .operation-status p {
   margin: 0;
-  color: #4f5b6d;
+  color: var(--brand-color-muted);
   font-size: 13px;
   line-height: 1.4;
 }
@@ -663,6 +704,22 @@ button,
 .create-form {
   display: grid;
   gap: 12px;
+  padding: 0 16px;
+}
+
+.create-field {
+  display: grid;
+  gap: 7px;
+  color: var(--brand-color-muted);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.create-field [role="combobox"] {
+  width: 100% !important;
+  color: var(--brand-color-foreground);
+  font-size: 14px;
+  font-weight: 400;
 }
 
 .create-form textarea {
@@ -672,12 +729,12 @@ button,
 
 .delete-confirm-button {
   color: #fff !important;
-  background: #c0362c !important;
+  background: var(--status-danger) !important;
 }
 
 .delete-dialog {
-  border-color: #d8dee8 !important;
-  color: #172033 !important;
+  border-color: var(--brand-color-border) !important;
+  color: var(--brand-color-foreground) !important;
   background: #fff !important;
 }
 
@@ -721,10 +778,6 @@ button,
 
   .scanner {
     border-radius: 0;
-  }
-
-  .schema-select-trigger {
-    width: calc(100vw - 86px) !important;
   }
 
   .schema-sheet {

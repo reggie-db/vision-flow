@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" fill="none" role="img" aria-label="Vision Flow">
+  <g stroke="#1B3139" stroke-width="5" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M8 21V8h13"/><path d="M43 8h13v13"/><path d="M8 43v13h13"/><path d="M56 43v13H43"/>
+  </g>
+  <g stroke="#FF3621" stroke-width="5" stroke-linecap="round">
+    <path d="M19 23h16"/><path d="M19 32h42"/><path d="M19 41h10"/>
+  </g>
+</svg>

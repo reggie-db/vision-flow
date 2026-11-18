@@ -1,3 +1,5 @@
+import type { CaptureGuide } from '../../../shared/vision-contracts.ts';
+
 export interface FocusBounds {
   x: number;
   y: number;
@@ -12,23 +14,46 @@ export interface FocusAnalysis {
   score: number;
 }
 
-const DOCUMENT_GUIDE: FocusBounds = {
-  x: 0.19,
-  y: 0.05,
-  width: 0.62,
-  height: 0.78,
+export const CAPTURE_GUIDE_BOUNDS: Record<Exclude<CaptureGuide, 'none'>, FocusBounds> = {
+  vertical: {
+    x: 0.19,
+    y: 0.15,
+    width: 0.62,
+    height: 0.62,
+  },
+  horizontal: {
+    x: 0.08,
+    y: 0.31,
+    width: 0.84,
+    height: 0.25,
+  },
 };
 
-/** Detect a document-like region inside the portrait guide and estimate its sharpness. */
-export function analyzeFocus(image: ImageData): FocusAnalysis {
+export function captureGuideBounds(captureGuide: CaptureGuide): FocusBounds {
+  return captureGuide === 'none'
+    ? { x: 0, y: 0, width: 1, height: 1 }
+    : CAPTURE_GUIDE_BOUNDS[captureGuide];
+}
+
+export function initialFocusAnalysis(captureGuide: CaptureGuide): FocusAnalysis {
+  return {
+    bounds: captureGuideBounds(captureGuide),
+    focused: false,
+    documentDetected: false,
+    score: 0,
+  };
+}
+
+/** Detect a document-like region inside the configured guide and estimate its sharpness. */
+export function analyzeFocus(image: ImageData, guide: FocusBounds): FocusAnalysis {
   const { data, width, height } = image;
   const grayscale = new Float32Array(width * height);
-  const guideLeft = Math.max(1, Math.floor(DOCUMENT_GUIDE.x * width));
-  const guideTop = Math.max(1, Math.floor(DOCUMENT_GUIDE.y * height));
-  const guideRight = Math.min(width - 1, Math.ceil((DOCUMENT_GUIDE.x + DOCUMENT_GUIDE.width) * width));
+  const guideLeft = Math.max(1, Math.floor(guide.x * width));
+  const guideTop = Math.max(1, Math.floor(guide.y * height));
+  const guideRight = Math.min(width - 1, Math.ceil((guide.x + guide.width) * width));
   const guideBottom = Math.min(
     height - 1,
-    Math.ceil((DOCUMENT_GUIDE.y + DOCUMENT_GUIDE.height) * height)
+    Math.ceil((guide.y + guide.height) * height)
   );
   const guideWidth = guideRight - guideLeft;
   const guideHeight = guideBottom - guideTop;
@@ -100,7 +125,7 @@ export function analyzeFocus(image: ImageData): FocusAnalysis {
     inkRatio >= 0.012;
 
   return {
-    bounds: DOCUMENT_GUIDE,
+    bounds: guide,
     focused: documentDetected && enoughEdges && score >= 190,
     documentDetected,
     score,
