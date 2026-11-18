@@ -395,7 +395,10 @@ export function SchemaManagement() {
                         <strong>{field.label}</strong>
                         <span>{field.description}</span>
                       </div>
-                      <Badge variant={field.required ? 'default' : 'outline'}>
+                      <Badge
+                        className={field.required ? 'required-badge' : undefined}
+                        variant={field.required ? 'default' : 'outline'}
+                      >
                         {field.required ? 'Required' : 'Optional'}
                       </Badge>
                     </li>
