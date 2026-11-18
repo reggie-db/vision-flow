@@ -2,6 +2,9 @@ bundle:
   name: vision-flow
 
 variables:
+  app_name:
+    description: Databricks App resource name
+    default: vision-flow
   catalog:
     description: Unity Catalog catalog for pipeline outputs
     default: reggie_pierce_aws_catalog
@@ -41,9 +44,6 @@ variables:
   lakebase_role_name:
     description: Shared password role used by the app and Spark workers
     default: vision_flow_runtime
-  app_service_principal_client_id:
-    description: Databricks App service principal client ID granted the shared Lakebase role
-    default: 7114571e-28e1-4a1d-94de-c65cedf5be02
   lakebase_database_owner_role_id:
     description: Existing Lakebase OAuth role ID that owns the database control-plane resource
     default: reggie-pierce
@@ -76,7 +76,7 @@ variables:
     default: cstore_ops
   genie_space_id:
     description: Curated Genie space updated as categories become ready
-    default: 01f1ccd35062104083dd7fc48b37f4df
+    default: 01f1e3816683123ea28f7ce5f49dd8c3
   genie_space_name:
     description: Display name of the curated Genie space
     default: Vision Flow
@@ -86,9 +86,6 @@ variables:
   dashboard_display_name:
     description: Display name of the shared AI/BI dashboard with one generated page per extraction schema
     default: Vision Flow Analytics
-  dashboard_id:
-    description: Existing AI/BI dashboard updated as extraction schemas are created, renamed, and deleted
-    default: 01f1cd7c4bcf128daaacdfe8894b0f64
   workspace_host:
     description: Workspace host used for dashboard links in the PWA
     default: https://fevm-reggie-pierce-aws.cloud.databricks.com
@@ -125,7 +122,7 @@ resources:
       embed_credentials: false
       permissions:
         - level: CAN_EDIT
-          service_principal_name: ${var.app_service_principal_client_id}
+          service_principal_name: ${resources.apps.app.service_principal_client_id}
         - level: CAN_READ
           group_name: users
   postgres_projects:
@@ -168,7 +165,7 @@ resources:
         prevent_destroy: true
   apps:
     app:
-      name: vision-flow
+      name: ${var.app_name}
       description: Generate dynamic vision prompts, ingest structured image data, and query results with Genie
       source_code_path: ./
       lifecycle:

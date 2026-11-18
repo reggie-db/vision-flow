@@ -76,7 +76,7 @@
       },
       "steps": [
         {
-          "exec": "bun --watch server/server.ts",
+          "exec": "bun --watch scripts/local-start.ts",
           "receiveArgs": true
         }
       ]

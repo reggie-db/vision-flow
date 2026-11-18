@@ -71,7 +71,6 @@ project.applyToProjects(rootProject, { path: "packages/app" }, (app) => {
         { name: "VISION_FLOW_GENIE_SPACE_ID", valueFrom: "genie-space" },
         { name: "VISION_FLOW_GENIE_WAREHOUSE_ID", valueFrom: "sql-warehouse" },
         { name: "VISION_FLOW_GENIE_MAX_TABLES", value: bundleVariable("genie_max_tables") },
-        { name: "VISION_FLOW_DASHBOARD_ID", value: bundleVariable("dashboard_id") },
         { name: "VISION_FLOW_DASHBOARD_DISPLAY_NAME", value: bundleVariable("dashboard_display_name") },
         { name: "VISION_FLOW_WORKSPACE_HOST", value: bundleVariable("workspace_host") },
         { name: "MASTRA_GENIE_IDENTITY", value: bundleVariable("mastra_genie_identity") },
@@ -123,7 +122,16 @@ project.applyToProjects(rootProject, { path: "packages/app" }, (app) => {
     "bun-plugin-tailwind@^0.1.2",
     "vite@npm:rolldown-vite@7.1.14",
   );
+  app.tasks.tryFind("dev")?.reset("bun --watch scripts/local-start.ts", { receiveArgs: true });
 });
+
+const rootDev = rootProject.addTask("dev", {
+  description: "Run the AppKit server in development mode",
+  env: { NODE_ENV: "development" },
+  exec: "bun --watch scripts/local-start.ts",
+  receiveArgs: true,
+});
+rootDev.cwd = "packages/app";
 
 rootProject.gitignore.addPatterns(
   "/.databricks/",

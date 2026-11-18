@@ -46,8 +46,6 @@ env:
     valueFrom: sql-warehouse
   - name: VISION_FLOW_GENIE_MAX_TABLES
     value: "30"
-  - name: VISION_FLOW_DASHBOARD_ID
-    value: 01f1cd7c4bcf128daaacdfe8894b0f64
   - name: VISION_FLOW_DASHBOARD_DISPLAY_NAME
     value: Vision Flow Analytics
   - name: VISION_FLOW_WORKSPACE_HOST

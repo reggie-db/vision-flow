@@ -102,9 +102,15 @@ const project = variable('lakebase_project_id');
 const branch = variable('lakebase_branch_id');
 const endpointId = variable('lakebase_endpoint_id');
 const databaseName = variable('lakebase_database_name');
+const appName = variable('app_name');
 const lakebase = createLakebaseClient({ profile });
 const resolved = await lakebase.resolve({ project, branch, endpointId, database: databaseName }, profile);
 const oauthPassword = await lakebase.generateDatabaseCredential(resolved.endpoint, profile);
+const appResponse = await request(`/api/2.0/apps/${encodeURIComponent(appName)}`);
+if (!appResponse.ok) throw new Error(`Could not read Databricks App ${appName}: ${await appResponse.text()}`);
+const appServicePrincipalClientId = z
+  .object({ service_principal_client_id: z.string().min(1) })
+  .parse(await appResponse.json()).service_principal_client_id;
 const adminPool = new Pool(
   postgresConnectionOptions({
     host: resolved.host,
@@ -128,7 +134,7 @@ try {
   }
   await adminPool.query(`GRANT ${roleIdentifier} TO ${quotePostgresIdentifier(currentUser)}`);
   await adminPool.query(
-    `GRANT ${roleIdentifier} TO ${quotePostgresIdentifier(variable('app_service_principal_client_id'))}`,
+    `GRANT ${roleIdentifier} TO ${quotePostgresIdentifier(appServicePrincipalClientId)}`,
   );
   await adminPool.query(`GRANT CONNECT, CREATE ON DATABASE ${quotePostgresIdentifier(databaseName)} TO ${roleIdentifier}`);
   await adminPool.query(`ALTER DATABASE ${quotePostgresIdentifier(databaseName)} OWNER TO ${roleIdentifier}`);
