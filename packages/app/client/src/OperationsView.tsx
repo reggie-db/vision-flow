@@ -10,10 +10,10 @@ import {
 import { BrandIcon } from '@dbx-tools/ui/branding/react';
 import { MastraAssistant } from '@dbx-tools/ui-mastra/react';
 import { useEffect, useState } from 'react';
-import { CategorySchema, type Category } from '../../shared/vision-contracts.ts';
 import { ActivityMonitor } from './ActivityMonitor.tsx';
+import { InfoPresentation } from './InfoPresentation.tsx';
 import { SchemaManagement } from './SchemaManagement.tsx';
-import { SystemFlow } from './SystemFlow.tsx';
+import { CategorySchema, type Category } from '../../shared/vision-contracts.ts';
 
 async function responseError(response: Response, fallback: string): Promise<Error> {
   const payload = (await response.json().catch(() => null)) as { error?: string } | null;
@@ -71,7 +71,7 @@ export function OperationsView() {
       className="operations-assistant-shell"
       contentClassName="operations-assistant-content"
       panelClassName="operations-assistant-panel"
-      mode="overlay"
+      mode="dock"
       side="right"
       resizable={{ defaultSize: 500, minSize: 380, storageKey: 'vision-flow-assistant-size' }}
       mobileBreakpoint={720}
@@ -121,7 +121,7 @@ export function OperationsView() {
             <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
             <TabsTrigger value="schemas">Schemas</TabsTrigger>
             <TabsTrigger value="activity">Activity</TabsTrigger>
-            <TabsTrigger value="flow">Flow</TabsTrigger>
+            <TabsTrigger value="info">Info</TabsTrigger>
           </TabsList>
           <TabsContent value="dashboard" className="operations-tab-panel">
             <DashboardWorkspace />
@@ -132,8 +132,8 @@ export function OperationsView() {
           <TabsContent value="activity" className="operations-tab-panel">
             <ActivityMonitor />
           </TabsContent>
-          <TabsContent value="flow" className="operations-tab-panel">
-            <SystemFlow />
+          <TabsContent value="info" className="operations-tab-panel">
+            <InfoPresentation />
           </TabsContent>
         </Tabs>
       </main>

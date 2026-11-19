@@ -9,6 +9,12 @@ import {
   AlertDialogTitle,
   Badge,
   Button,
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
   Input,
   Select,
   SelectContent,
@@ -56,6 +62,7 @@ export function SchemaManagement() {
   const [newPrompt, setNewPrompt] = useState('');
   const [newCaptureGuide, setNewCaptureGuide] = useState<CaptureGuide | 'auto'>('auto');
   const [renameValue, setRenameValue] = useState('');
+  const [createOpen, setCreateOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [operationKind, setOperationKind] = useState<OperationKind | null>(null);
   const [operationEvents, setOperationEvents] = useState<OperationEvent[]>([]);
@@ -155,6 +162,13 @@ export function SchemaManagement() {
     }
   };
 
+  const resetCreateForm = () => {
+    setNewName('');
+    setNewPrompt('');
+    setNewCaptureGuide('auto');
+    setOperationEvents([]);
+  };
+
   const createSchema = () => {
     const prompt = newPrompt.trim();
     if (prompt.length < 3) return;
@@ -169,12 +183,26 @@ export function SchemaManagement() {
         idempotencyKey: crypto.randomUUID(),
       },
       (event) => {
-        setNewName('');
-        setNewPrompt('');
-        setNewCaptureGuide('auto');
+        resetCreateForm();
+        setCreateOpen(false);
         void loadCategories(event.categoryId);
       }
     );
+  };
+
+  const openCreateDialog = () => {
+    setError(null);
+    setOperationEvents([]);
+    setCreateOpen(true);
+  };
+
+  const changeCreateDialog = (open: boolean) => {
+    if (!open && operationKind === 'create') return;
+    setCreateOpen(open);
+    if (!open) {
+      resetCreateForm();
+      setError(null);
+    }
   };
 
   const renameSchema = () => {
@@ -226,8 +254,9 @@ export function SchemaManagement() {
     if (!selected) return;
     try {
       const response = await fetch(`/api/categories/${selected.id}/prompts/${promptId}`, { method: 'DELETE' });
-      if (!response.ok && response.status !== 404)
+      if (!response.ok && response.status !== 404) {
         throw await responseError(response, 'The prompt could not be removed.');
+      }
       await loadCategories(selected.id);
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : 'The prompt could not be removed.');
@@ -251,7 +280,22 @@ export function SchemaManagement() {
       <aside className="schema-sidebar" aria-label="Schemas">
         <div className="schema-sidebar-header">
           <strong>Schemas</strong>
-          <Badge variant="secondary">{categories.length}</Badge>
+          <div className="schema-sidebar-actions">
+            <Badge variant="secondary">{categories.length}</Badge>
+            <Button
+              className="schema-add-button"
+              variant="ghost"
+              size="icon"
+              onClick={openCreateDialog}
+              disabled={busy}
+              aria-label="Create schema"
+              title="Create schema"
+            >
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M12 5v14M5 12h14" />
+              </svg>
+            </Button>
+          </div>
         </div>
         <div className="schema-nav">
           {categories.map((category) => (
@@ -269,59 +313,11 @@ export function SchemaManagement() {
       </aside>
 
       <div className="schema-main">
-        {error ? (
+        {error && !createOpen ? (
           <div className="operations-error" role="alert">
             {error}
           </div>
         ) : null}
-
-        <section className="schema-create-panel" aria-labelledby="create-schema-title">
-          <div>
-            <h2 id="create-schema-title">New schema</h2>
-            <p>Describe the image and the structured fields the model should return.</p>
-          </div>
-          <div className="schema-create-grid">
-            <Input
-              value={newName}
-              onChange={(event) => setNewName(event.target.value)}
-              placeholder="Name (optional)"
-              aria-label="New schema name"
-              disabled={busy}
-            />
-            <Select
-              value={newCaptureGuide}
-              onValueChange={(value) => setNewCaptureGuide(value === 'auto' ? 'auto' : CaptureGuideSchema.parse(value))}
-              disabled={busy}
-            >
-              <SelectTrigger aria-label="New schema capture guide">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="auto">Automatic guide</SelectItem>
-                <SelectItem value="vertical">Vertical guide</SelectItem>
-                <SelectItem value="horizontal">Horizontal guide</SelectItem>
-                <SelectItem value="none">No guide</SelectItem>
-              </SelectContent>
-            </Select>
-            <Textarea
-              value={newPrompt}
-              onChange={(event) => setNewPrompt(event.target.value)}
-              placeholder="Driver license with name, license number, state, birth date, and expiration date"
-              aria-label="Fields to extract"
-              disabled={busy}
-              rows={3}
-            />
-            <Button onClick={createSchema} disabled={busy || newPrompt.trim().length < 3}>
-              {operationKind === 'create' ? 'Creating…' : 'Create schema'}
-            </Button>
-          </div>
-          {lastOperation && operationKind === 'create' ? (
-            <div className={`operation-status ${lastOperation.stage}`} role="status" aria-live="polite">
-              <span aria-hidden="true" />
-              <p>{uiCopy(lastOperation.message)}</p>
-            </div>
-          ) : null}
-        </section>
 
         {selected ? (
           <section className="schema-detail" aria-labelledby="selected-schema-title">
@@ -435,6 +431,88 @@ export function SchemaManagement() {
           <div className="operations-empty">No schemas are available.</div>
         )}
       </div>
+
+      <Dialog open={createOpen} onOpenChange={changeCreateDialog}>
+        <DialogContent className="schema-create-dialog">
+          <form
+            onSubmit={(event) => {
+              event.preventDefault();
+              createSchema();
+            }}
+          >
+            <DialogHeader>
+              <DialogTitle>New schema</DialogTitle>
+              <DialogDescription>Describe the image and fields to collect.</DialogDescription>
+            </DialogHeader>
+
+            <div className="schema-create-form">
+              <label>
+                <span>
+                  Name <small>(optional)</small>
+                </span>
+                <Input
+                  value={newName}
+                  onChange={(event) => setNewName(event.target.value)}
+                  placeholder="ID verification"
+                  disabled={busy}
+                  autoFocus
+                />
+              </label>
+              <label>
+                <span>Capture guide</span>
+                <Select
+                  value={newCaptureGuide}
+                  onValueChange={(value) =>
+                    setNewCaptureGuide(value === 'auto' ? 'auto' : CaptureGuideSchema.parse(value))
+                  }
+                  disabled={busy}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="auto">Automatic</SelectItem>
+                    <SelectItem value="vertical">Vertical</SelectItem>
+                    <SelectItem value="horizontal">Horizontal</SelectItem>
+                    <SelectItem value="none">None</SelectItem>
+                  </SelectContent>
+                </Select>
+              </label>
+              <label className="schema-create-prompt">
+                <span>Image and fields</span>
+                <Textarea
+                  value={newPrompt}
+                  onChange={(event) => setNewPrompt(event.target.value)}
+                  placeholder="Driver license with name, license number, state, birth date, and expiration date"
+                  disabled={busy}
+                  rows={5}
+                />
+              </label>
+            </div>
+
+            {error ? (
+              <div className="operations-error" role="alert">
+                {error}
+              </div>
+            ) : null}
+            {lastOperation ? (
+              <div className={`operation-status ${lastOperation.stage}`} role="status" aria-live="polite">
+                <span aria-hidden="true" />
+                <p>{uiCopy(lastOperation.message)}</p>
+              </div>
+            ) : null}
+
+            <DialogFooter>
+              <Button type="button" variant="outline" onClick={() => changeCreateDialog(false)} disabled={busy}>
+                Cancel
+              </Button>
+              <Button type="submit" disabled={busy || newPrompt.trim().length < 3}>
+                {operationKind === 'create' ? 'Creating…' : 'Create schema'}
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
 
       <AlertDialog open={deleteOpen} onOpenChange={setDeleteOpen}>
         <AlertDialogContent>

@@ -1,0 +1,170 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Vision Flow</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&display=block" rel="stylesheet" />
+<link rel="icon" href="../../../packages/app/client/public/favicon.svg" />
+<link rel="stylesheet" href="deck.css" />
+</head>
+<body>
+<main class="deck" aria-roledescription="slide deck" aria-label="Vision Flow">
+
+<!-- 1. Cover -->
+<section class="slide cover" aria-label="Slide 1: Vision Flow">
+  <svg class="cover-mark" viewBox="0 0 64 64" aria-hidden="true">
+    <g stroke="#fff" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" fill="none">
+      <path d="M8 21V8h13"/><path d="M43 8h13v13"/><path d="M8 43v13h13"/><path d="M56 43v13H43"/>
+    </g>
+    <g stroke="#FF3621" stroke-width="5" stroke-linecap="round"><path d="M19 23h16"/><path d="M19 41h10"/></g>
+  </svg>
+  <div class="cover-line" aria-hidden="true"></div>
+  <div class="cover-copy">
+    <h1>Vision Flow</h1>
+    <p class="cover-sub">Using AI on Databricks to generate the schema, dashboard, and extraction for a new document type, then load each photo as a typed row.</p>
+  </div>
+</section>
+
+<!-- 2. The ask -->
+<section class="slide" aria-label="Slide 2: Auditing daily lottery receipts">
+  <div class="split">
+    <div class="copy">
+      <h2>Auditing daily lottery receipts</h2>
+      <p class="lead">A customer submits lottery sales to the state every day. Staff checked each receipt by hand before the submission, and manual entry introduced errors.</p>
+      <p class="ask">The request: audit every receipt before the daily submission and reduce human error.</p>
+    </div>
+    <figure>
+      <div class="frame"><svg viewBox="140 10 280 620" class="receipt" role="img" aria-label="Lottery receipt with four fields highlighted">
+        <rect x="150" y="20" width="260" height="600" rx="6" fill="#fff"/>
+        <path d="M150 600l13 14 13-14 13 14 13-14 13 14 13-14 13 14 13-14 13 14 13-14 13 14 13-14 13 14 13-14 13 14 13-14 13 14 13-14 13 14 13-14v-20H150z" fill="#fff"/>
+        <g fill="#1B3139">
+          <rect x="200" y="52" width="160" height="16" rx="3"/>
+          <rect x="226" y="78" width="108" height="8" rx="3" opacity=".45"/>
+          <rect x="180" y="120" width="50" height="9" rx="3" opacity=".5"/><rect x="300" y="120" width="80" height="9" rx="3"/>
+          <rect x="180" y="150" width="70" height="9" rx="3" opacity=".5"/><rect x="290" y="150" width="90" height="9" rx="3"/>
+          <rect x="180" y="200" width="200" height="2" opacity=".2"/>
+          <rect x="180" y="226" width="90" height="10" rx="3"/><rect x="330" y="226" width="50" height="10" rx="3" opacity=".6"/>
+          <g opacity=".75">
+            <rect x="196" y="252" width="22" height="22" rx="11"/><rect x="226" y="252" width="22" height="22" rx="11"/><rect x="256" y="252" width="22" height="22" rx="11"/><rect x="286" y="252" width="22" height="22" rx="11"/><rect x="316" y="252" width="22" height="22" rx="11"/>
+          </g>
+          <rect x="180" y="300" width="90" height="10" rx="3"/><rect x="330" y="300" width="50" height="10" rx="3" opacity=".6"/>
+          <g opacity=".75">
+            <rect x="196" y="326" width="22" height="22" rx="11"/><rect x="226" y="326" width="22" height="22" rx="11"/><rect x="256" y="326" width="22" height="22" rx="11"/><rect x="286" y="326" width="22" height="22" rx="11"/><rect x="316" y="326" width="22" height="22" rx="11"/>
+          </g>
+          <rect x="180" y="380" width="200" height="2" opacity=".2"/>
+          <rect x="180" y="404" width="80" height="14" rx="3"/><rect x="316" y="404" width="64" height="14" rx="3"/>
+          <g opacity=".85"><rect x="190" y="460" width="4" height="70"/><rect x="200" y="460" width="8" height="70"/><rect x="214" y="460" width="3" height="70"/><rect x="222" y="460" width="6" height="70"/><rect x="234" y="460" width="4" height="70"/><rect x="244" y="460" width="10" height="70"/><rect x="260" y="460" width="4" height="70"/><rect x="270" y="460" width="6" height="70"/><rect x="282" y="460" width="3" height="70"/><rect x="290" y="460" width="8" height="70"/><rect x="304" y="460" width="4" height="70"/><rect x="314" y="460" width="6" height="70"/><rect x="326" y="460" width="3" height="70"/><rect x="334" y="460" width="10" height="70"/><rect x="350" y="460" width="4" height="70"/><rect x="360" y="460" width="6" height="70"/></g>
+        </g>
+        <g fill="none" stroke="#FF3621" stroke-width="4">
+          <rect x="192" y="44" width="176" height="32" rx="5"/>
+          <rect x="290" y="112" width="100" height="25" rx="5"/>
+          <rect x="280" y="142" width="110" height="25" rx="5"/>
+          <rect x="306" y="396" width="84" height="30" rx="5"/>
+        </g>
+      </svg></div>
+      <dl class="fields">
+        <div><dt>jurisdiction</dt><dd>TX</dd></div>
+        <div><dt>ticket_number</dt><dd>0418-2209-7731</dd></div>
+        <div><dt>purchase_date</dt><dd>2026-11-14</dd></div>
+        <div><dt>total_paid</dt><dd>$10.00</dd></div>
+      </dl>
+    </figure>
+  </div>
+</section>
+
+<!-- 3. The questions -->
+<section class="slide" aria-label="Slide 3: Other documents with the same need">
+  <h2 class="wide">Other documents with the same need</h2>
+  <p class="lead wide">The same customer asked whether this approach could also check ID cards and confirm that signed documents are complete.</p>
+  <div class="docs">
+    <figure class="doc">
+      <svg viewBox="0 0 300 260" role="img" aria-label="Receipt">
+        <rect x="95" y="14" width="110" height="232" rx="4" fill="#fff"/>
+        <g fill="#1B3139"><rect x="115" y="32" width="70" height="10" rx="2"/><rect x="110" y="60" width="40" height="6" rx="2" opacity=".5"/><rect x="160" y="60" width="30" height="6" rx="2"/><rect x="110" y="78" width="50" height="6" rx="2" opacity=".5"/><rect x="164" y="78" width="26" height="6" rx="2"/><rect x="110" y="110" width="80" height="2" opacity=".2"/><rect x="110" y="128" width="44" height="8" rx="2"/><rect x="164" y="128" width="26" height="8" rx="2" opacity=".6"/><rect x="110" y="150" width="44" height="8" rx="2"/><rect x="164" y="150" width="26" height="8" rx="2" opacity=".6"/><g opacity=".8"><rect x="112" y="190" width="3" height="36"/><rect x="119" y="190" width="6" height="36"/><rect x="129" y="190" width="2" height="36"/><rect x="135" y="190" width="5" height="36"/><rect x="144" y="190" width="3" height="36"/><rect x="151" y="190" width="7" height="36"/><rect x="162" y="190" width="3" height="36"/><rect x="169" y="190" width="5" height="36"/><rect x="178" y="190" width="2" height="36"/><rect x="184" y="190" width="5" height="36"/></g></g>
+      </svg>
+      <figcaption><b>Lottery receipt</b><span>Every play and total is captured before filing.</span></figcaption>
+    </figure>
+    <figure class="doc">
+      <svg viewBox="0 0 300 260" role="img" aria-label="ID card">
+        <rect x="20" y="52" width="260" height="160" rx="14" fill="#fff"/>
+        <path d="M20 66a14 14 0 0 1 14-14h232a14 14 0 0 1 14 14v18H20z" fill="#1B3139"/>
+        <rect x="36" y="62" width="70" height="10" rx="2" fill="#fff" opacity=".9"/>
+        <rect x="36" y="100" width="70" height="88" rx="6" fill="#DCDAD3"/><circle cx="71" cy="132" r="15" fill="#1B3139" opacity=".3"/><path d="M45 186c5-20 17-28 26-28s21 8 26 28z" fill="#1B3139" opacity=".3"/>
+        <g fill="#1B3139"><rect x="124" y="104" width="40" height="5" rx="2" opacity=".45"/><rect x="124" y="114" width="120" height="9" rx="2"/><rect x="124" y="138" width="40" height="5" rx="2" opacity=".45"/><rect x="124" y="148" width="70" height="9" rx="2"/><rect x="124" y="170" width="40" height="5" rx="2" opacity=".45"/><rect x="124" y="180" width="84" height="9" rx="2"/></g>
+      </svg>
+      <figcaption><b>ID card</b><span>Required fields are present and the card isn't expired.</span></figcaption>
+    </figure>
+    <figure class="doc">
+      <svg viewBox="0 0 300 260" role="img" aria-label="Signed document">
+        <rect x="70" y="14" width="160" height="232" rx="4" fill="#fff"/>
+        <g fill="#1B3139"><rect x="90" y="34" width="90" height="10" rx="2"/><rect x="90" y="62" width="120" height="5" rx="2" opacity=".35"/><rect x="90" y="74" width="110" height="5" rx="2" opacity=".35"/><rect x="90" y="86" width="120" height="5" rx="2" opacity=".35"/><rect x="90" y="98" width="80" height="5" rx="2" opacity=".35"/><rect x="90" y="122" width="120" height="5" rx="2" opacity=".35"/><rect x="90" y="134" width="96" height="5" rx="2" opacity=".35"/><rect x="90" y="196" width="70" height="2" opacity=".6"/><rect x="176" y="196" width="34" height="2" opacity=".6"/><rect x="90" y="204" width="30" height="4" rx="2" opacity=".4"/><rect x="176" y="204" width="20" height="4" rx="2" opacity=".4"/></g>
+        <path d="M94 190c8-14 14-16 16-8s-4 10 2 2 10-14 12-6 6 8 12 0 8-4 10 2" fill="none" stroke="#1B3139" stroke-width="2.2" stroke-linecap="round"/>
+      </svg>
+      <figcaption><b>Signed document</b><span>Each signature and date line is filled in.</span></figcaption>
+    </figure>
+  </div>
+</section>
+
+<!-- 4. Two jobs -->
+<section class="slide" aria-label="Slide 4: Two uses of AI in this demo">
+  <h2 class="wide">Two uses of AI in this demo</h2>
+  <div class="jobs">
+    <div class="job">
+      <h3>Read the image</h3>
+      <p>A vision model turns each photo into a structured record with a confidence score per field.</p>
+      <pre class="code"><span class="k">{</span>
+  <span class="s">"jurisdiction"</span>: { <span class="s">"value"</span>: <span class="v">"TX"</span>,
+                    <span class="s">"confidence"</span>: <span class="v">0.99</span> },
+  <span class="s">"purchase_date"</span>: { <span class="s">"value"</span>: <span class="v">"2026-11-14"</span>,
+                     <span class="s">"confidence"</span>: <span class="v">0.95</span> },
+  <span class="s">"total_paid"</span>: { <span class="s">"value"</span>: <span class="v">10.00</span>,
+                  <span class="s">"confidence"</span>: <span class="v">0.98</span> }
+<span class="k">}</span></pre>
+    </div>
+    <div class="job emphasis">
+      <h3>Generate the structure</h3>
+      <p>From a one-sentence description, AI generates the schema to collect, a dashboard page for that schema, and the extraction instructions the pipeline runs.</p>
+      <ul class="made">
+        <li><b>Schema</b><span>fields, types, required checks</span></li>
+        <li><b>Dashboard</b><span>a page built from that schema</span></li>
+        <li><b>Extraction</b><span>instructions the pipeline runs</span></li>
+      </ul>
+    </div>
+  </div>
+  <p class="foot-note inline">Most of the demo covers the second use.</p>
+</section>
+
+<!-- 5. The flow (React Flow, see flow.tsx) -->
+<section class="slide flow-slide" data-id="flow" aria-label="Slide 5: From a prompt to ingested data">
+  <h2 class="wide">From a prompt to ingested data</h2>
+  <div id="flow" role="img" aria-label="A prompt generates a schema. The schema generates a dashboard page and the extraction instructions for a Lakeflow pipeline. Photos go through the pipeline into a Delta table, which the dashboard queries."></div>
+  <p class="foot-note">One continuous Lakeflow pipeline handles every schema. Adding a document type adds a schema; the pipeline stays the same.</p>
+</section>
+
+<!-- 6. What runs where -->
+<section class="slide" aria-label="Slide 6: Databricks components">
+  <h2 class="wide">Databricks components</h2>
+  <div class="stack">
+    <div class="tier"><b>Databricks App</b><span>Camera capture, a quick image check, and schema management</span></div>
+    <div class="tier"><b>Lakebase</b><span>Schema registry: versions, prompts, and search</span></div>
+    <div class="tier"><b>Lakeflow pipeline</b><span>Continuous extraction with a vision model, per-field confidence and evidence</span></div>
+    <div class="tier"><b>Delta table</b><span>One results table, each row tied to its schema fingerprint</span></div>
+    <div class="tier"><b>AI/BI and Genie</b><span>Generated dashboard pages and natural-language questions over the results</span></div>
+  </div>
+  <p class="closing">To add a document type, describe it in a sentence and scan an example.</p>
+</section>
+
+</main>
+<nav class="controls" aria-label="Slide controls">
+  <button type="button" data-step="-1" aria-label="Previous slide">Previous</button>
+  <span class="count" aria-live="polite"></span>
+  <button type="button" data-step="1" aria-label="Next slide">Next</button>
+</nav>
+<link rel="stylesheet" href="flow.css" />
+<script src="deck.js"></script>
+<script defer src="flow.js"></script>
+</body>
+</html>

@@ -2,6 +2,8 @@ import { project, projectJs } from "@dbx-tools/projen";
 import { readFileSync } from "node:fs";
 import { YamlFile } from "projen";
 
+const dbxToolsVersion = "^0.9.211";
+
 interface BundleVariable {
   readonly default?: unknown;
   readonly value?: unknown;
@@ -97,18 +99,18 @@ project.applyToProjects(rootProject, { path: "packages/app" }, (app) => {
     "@databricks/sdk-experimental@^0.17.0",
     "@tailwindcss/vite@^4.3.2",
     "@vitejs/plugin-react@^5.1.1",
-    "@dbx-tools/appkit@^0.9.210",
-    "@dbx-tools/appkit-mastra@^0.9.210",
-    "@dbx-tools/auth@^0.9.210",
-    "@dbx-tools/core@^0.9.210",
-    "@dbx-tools/email@^0.9.210",
-    "@dbx-tools/lakebase@^0.9.210",
-    "@dbx-tools/postgres@^0.9.210",
-    "@dbx-tools/shared-core@^0.9.210",
-    "@dbx-tools/shared-mastra@^0.9.210",
-    "@dbx-tools/tunnel@^0.9.210",
-    "@dbx-tools/ui@^0.9.210",
-    "@dbx-tools/ui-mastra@^0.9.210",
+    `@dbx-tools/appkit@${dbxToolsVersion}`,
+    `@dbx-tools/appkit-mastra@${dbxToolsVersion}`,
+    `@dbx-tools/auth@${dbxToolsVersion}`,
+    `@dbx-tools/core@${dbxToolsVersion}`,
+    `@dbx-tools/email@${dbxToolsVersion}`,
+    `@dbx-tools/lakebase@${dbxToolsVersion}`,
+    `@dbx-tools/postgres@${dbxToolsVersion}`,
+    `@dbx-tools/shared-core@${dbxToolsVersion}`,
+    `@dbx-tools/shared-mastra@${dbxToolsVersion}`,
+    `@dbx-tools/tunnel@${dbxToolsVersion}`,
+    `@dbx-tools/ui@${dbxToolsVersion}`,
+    `@dbx-tools/ui-mastra@${dbxToolsVersion}`,
     "@fontsource-variable/dm-sans@^5.3.0",
     "@fontsource/dm-mono@^5.3.0",
     "@mlflow/core@0.4.0",
