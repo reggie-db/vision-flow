@@ -1,6 +1,7 @@
 import { z } from 'zod';
 
 export const MAX_IMAGE_DATA_URL_LENGTH = 8_000_000;
+export const ACTIVITY_EVENT_LIMIT = 2_000;
 export const ACTIVITY_IMAGE_PREVIEW_ROUTE = '/api/activity/image-preview';
 
 export const CaptureGuideSchema = z.enum(['vertical', 'horizontal', 'none']);

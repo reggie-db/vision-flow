@@ -2,6 +2,7 @@ import { ResourceStatusProvider } from '@databricks/appkit-ui/react';
 import { parseBrandContext } from '@dbx-tools/shared-core';
 import { applyBrandContext } from '@dbx-tools/ui/branding';
 import { BrandProvider } from '@dbx-tools/ui/branding/react';
+import '@dbx-tools/ui/table/styles.css';
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import './index.css';

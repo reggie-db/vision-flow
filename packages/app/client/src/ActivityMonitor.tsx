@@ -1,12 +1,15 @@
-import { Badge, Button, Skeleton } from '@databricks/appkit-ui/react';
+import { Button } from '@databricks/appkit-ui/react';
+import { DataTable, type ColumnDef } from '@dbx-tools/ui/table/react';
 import { useEffect, useMemo, useState } from 'react';
 import {
+  ACTIVITY_EVENT_LIMIT,
   ACTIVITY_IMAGE_PREVIEW_ROUTE,
   ActivityMessageSchema,
   type ActivityMessage,
 } from '../../shared/vision-contracts.ts';
 
 type ConnectionState = 'connecting' | 'live' | 'reconnecting';
+type PreviewState = 'loading' | 'loaded' | 'failed';
 
 function eventLabel(type: string): string {
   return type
@@ -46,16 +49,24 @@ function deviceSummary(event: ActivityMessage): string | undefined {
 }
 
 function ActivityImage({ path, alt }: { path: string; alt: string }) {
-  const [failed, setFailed] = useState(false);
-  if (failed) return <div className="activity-preview-error">Preview unavailable.</div>;
+  const [state, setState] = useState<PreviewState>('loading');
   const query = new URLSearchParams({ path });
   return (
-    <img
-      className="activity-preview-image"
-      src={`${ACTIVITY_IMAGE_PREVIEW_ROUTE}?${query}`}
-      alt={alt}
-      onError={() => setFailed(true)}
-    />
+    <div className={`activity-preview-frame ${state}`}>
+      {state === 'loading' ? (
+        <span className="activity-preview-spinner" role="status" aria-label="Loading image preview" />
+      ) : null}
+      {state === 'failed' ? <span className="activity-preview-error">Preview unavailable.</span> : null}
+      <img
+        className="activity-preview-image"
+        src={`${ACTIVITY_IMAGE_PREVIEW_ROUTE}?${query}`}
+        alt={alt}
+        loading="lazy"
+        decoding="async"
+        onLoad={() => setState('loaded')}
+        onError={() => setState('failed')}
+      />
+    </div>
   );
 }
 
@@ -63,7 +74,6 @@ export function ActivityMonitor() {
   const [events, setEvents] = useState<ActivityMessage[]>([]);
   const [connection, setConnection] = useState<ConnectionState>('connecting');
   const [error, setError] = useState<string | null>(null);
-  const [expandedEventId, setExpandedEventId] = useState<string | null>(null);
 
   useEffect(() => {
     const stream = new EventSource('/api/activity/events');
@@ -74,7 +84,9 @@ export function ActivityMonitor() {
     stream.addEventListener('activity', (raw) => {
       try {
         const event = ActivityMessageSchema.parse(JSON.parse((raw as MessageEvent<string>).data));
-        setEvents((current) => [event, ...current.filter((item) => item.id !== event.id)].slice(0, 100));
+        setEvents((current) =>
+          [event, ...current.filter((item) => item.id !== event.id)].slice(0, ACTIVITY_EVENT_LIMIT)
+        );
       } catch {
         setError('An activity event could not be read.');
       }
@@ -92,102 +104,109 @@ export function ActivityMonitor() {
 
   const mobileOpens = useMemo(() => events.filter((event) => event.type === 'mobile.view.opened').length, [events]);
   const imageEvents = useMemo(() => events.filter((event) => event.type.startsWith('image.')).length, [events]);
+  const columns = useMemo<ColumnDef<ActivityMessage>[]>(
+    () => [
+      {
+        id: 'activity',
+        header: 'Activity',
+        accessorFn: (event) => event.body.summary,
+        size: 370,
+        cell: ({ row }) => {
+          const event = row.original;
+          const rejectionReason = stringValue(event.body, 'reason');
+          return (
+            <div className="activity-table-event">
+              <span className={`activity-event-icon ${event.type.replaceAll('.', '-')}`} aria-hidden="true" />
+              <div>
+                <strong>{event.body.summary}</strong>
+                <span className="activity-event-type">{eventLabel(event.type)}</span>
+                {rejectionReason ? <small>{rejectionReason}</small> : null}
+              </div>
+            </div>
+          );
+        },
+      },
+      {
+        id: 'preview',
+        header: 'Captured image',
+        size: 310,
+        enableSorting: false,
+        cell: ({ row }) => {
+          const event = row.original;
+          const storedPath = stringValue(event.body, 'storedPath');
+          return storedPath ? (
+            <ActivityImage path={storedPath} alt={`Captured image for ${event.body.summary}`} />
+          ) : (
+            <span className="activity-table-empty" aria-label="No captured image">
+              —
+            </span>
+          );
+        },
+      },
+      {
+        id: 'device',
+        header: 'Capture device',
+        accessorFn: (event) => deviceSummary(event) ?? '',
+        size: 320,
+        cell: ({ row }) => (
+          <span className="activity-device-summary">{deviceSummary(row.original) ?? 'Not reported'}</span>
+        ),
+      },
+      {
+        accessorKey: 'publishedAt',
+        header: 'Time',
+        size: 210,
+        cell: ({ row }) => (
+          <div className="activity-table-time">
+            <span>{new Date(row.original.publishedAt).toLocaleString()}</span>
+            <small>{sender(row.original)}</small>
+          </div>
+        ),
+      },
+    ],
+    []
+  );
 
   return (
     <div className="activity-workspace">
-      <div className="activity-toolbar">
-        <div className="activity-status" aria-live="polite">
-          <span className={`activity-dot ${connection}`} aria-hidden="true" />
-          <span>{connection === 'live' ? 'Live' : connection === 'connecting' ? 'Connecting' : 'Reconnecting'}</span>
-        </div>
-        <div className="activity-counts">
-          <Badge variant="secondary">
-            {mobileOpens} mobile {mobileOpens === 1 ? 'open' : 'opens'}
-          </Badge>
-          <Badge variant="secondary">
-            {imageEvents} image {imageEvents === 1 ? 'event' : 'events'}
-          </Badge>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => {
-              setEvents([]);
-              setExpandedEventId(null);
-            }}
-            disabled={events.length === 0}
-          >
-            Clear view
-          </Button>
-        </div>
-      </div>
-
       {error ? (
         <div className="operations-error" role="alert">
           {error}
         </div>
       ) : null}
-
-      {connection === 'connecting' && events.length === 0 ? (
-        <div className="activity-loading" aria-label="Loading activity">
-          <Skeleton />
-          <Skeleton />
-          <Skeleton />
-        </div>
-      ) : events.length === 0 ? (
-        <div className="operations-empty">
-          Activity will appear here when users open the mobile view or submit images.
-        </div>
-      ) : (
-        <ol className="activity-list" aria-label="Recent activity">
-          {events.map((event) => {
-            const storedPath = stringValue(event.body, 'storedPath');
-            const rejectionReason = stringValue(event.body, 'reason');
-            const device = deviceSummary(event);
-            const expandable = Boolean(storedPath || rejectionReason);
-            const expanded = expandedEventId === event.id;
-            return (
-              <li key={event.id} className={expanded ? 'expanded' : undefined}>
-                <span className={`activity-event-icon ${event.type.replaceAll('.', '-')}`} aria-hidden="true" />
-                <div className="activity-event-main">
-                  <div className="activity-event-heading">
-                    <strong>{event.body.summary}</strong>
-                    <div className="activity-event-actions">
-                      <Badge variant="outline">{eventLabel(event.type)}</Badge>
-                      {expandable ? (
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          aria-expanded={expanded}
-                          onClick={() => setExpandedEventId(expanded ? null : event.id)}
-                        >
-                          {storedPath ? 'View image' : 'Details'}
-                        </Button>
-                      ) : null}
-                    </div>
-                  </div>
-                  <small>
-                    {sender(event)} · {new Date(event.publishedAt).toLocaleString()}
-                  </small>
-                  {device ? <small className="activity-device-summary">{device}</small> : null}
-                </div>
-                {expanded ? (
-                  <div className="activity-event-details">
-                    {storedPath ? (
-                      <ActivityImage path={storedPath} alt={`Captured image for ${event.body.summary}`} />
-                    ) : null}
-                    {rejectionReason ? (
-                      <div className="activity-rejection-reason">
-                        <span>Reason</span>
-                        <p>{rejectionReason}</p>
-                      </div>
-                    ) : null}
-                  </div>
-                ) : null}
-              </li>
-            );
-          })}
-        </ol>
-      )}
+      <DataTable
+        id="vision-flow-activity"
+        className="activity-table"
+        data={events}
+        columns={columns}
+        getRowId={(event) => event.id}
+        ariaLabel="Recent activity"
+        persistence={false}
+        initialState={{ sorting: [{ id: 'publishedAt', desc: true }] }}
+        summary={
+          <span className="activity-status">
+            <span className={`activity-dot ${connection}`} aria-hidden="true" />
+            {connection === 'live' ? 'Live' : connection === 'connecting' ? 'Connecting' : 'Reconnecting'}
+          </span>
+        }
+        description={`${events.length} events · ${mobileOpens} mobile opens · ${imageEvents} image events`}
+        toolbarActions={
+          <Button variant="outline" size="sm" onClick={() => setEvents([])} disabled={events.length === 0}>
+            Clear view
+          </Button>
+        }
+        empty="Activity will appear here when users open the mobile view or submit images."
+        loading={connection === 'connecting' && events.length === 0}
+        loadingContent="Loading activity."
+        showColumnMenu={false}
+        showReset={false}
+        enableColumnReordering={false}
+        enableColumnResizing={false}
+        lazy
+        initialRowCount={30}
+        rowBatchSize={30}
+        resetScrollOnStateChange={false}
+      />
     </div>
   );
 }

@@ -20,6 +20,7 @@ import { quickImageGate } from './model-gateway.ts';
 import { createOperation, listOperationEvents, subscribeOperation } from './operations.ts';
 import { deletePrompt, getCategory, getSchemaVersion, listCategories, setCategoryCaptureGuide } from './registry.ts';
 import {
+  ACTIVITY_EVENT_LIMIT,
   ACTIVITY_IMAGE_PREVIEW_ROUTE,
   MobileViewActivityRequestSchema,
   CategoryDeleteRequestSchema,
@@ -35,6 +36,7 @@ import {
 
 const TUNNEL_ENABLED = Boolean(process.env.TUNNEL_PUBLIC_DOMAIN);
 const SOURCE_IMAGE_VOLUME_KEY = 'files';
+const ACTIVITY_HISTORY_PAGE_SIZE = 100;
 const logger = log.logger('vision-flow');
 const UuidSchema = z.string().uuid();
 const StoredImagePathSchema = z
@@ -327,12 +329,15 @@ await appkit.createApp({
           let cursor: string | undefined;
           let pages = 0;
           do {
-            const page = await activityBus.history(ACTIVITY_TOPIC, { after: cursor, limit: 100 });
+            const page = await activityBus.history(ACTIVITY_TOPIC, {
+              after: cursor,
+              limit: ACTIVITY_HISTORY_PAGE_SIZE,
+            });
             retained.push(...page.messages.map(({ message }) => message));
             cursor = page.nextCursor;
             pages += 1;
-          } while (cursor && pages < 20 && !closed);
-          for (const event of retained.slice(-100)) send(event);
+          } while (cursor && pages < Math.ceil(ACTIVITY_EVENT_LIMIT / ACTIVITY_HISTORY_PAGE_SIZE) && !closed);
+          for (const event of retained.slice(-ACTIVITY_EVENT_LIMIT)) send(event);
           replaying = false;
           for (const event of pending) send(event);
         } catch (error) {
