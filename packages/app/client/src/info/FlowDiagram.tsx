@@ -59,7 +59,7 @@ function ReceiptCount() {
       () => {
         timer = setInterval(() => setCount((value) => value + 1), 800);
       },
-      (T.data + 0.8 + PACKET_SECONDS) * 1000,
+      (T.data + 0.8 + PACKET_SECONDS) * 1000
     );
     return () => {
       clearTimeout(start);
@@ -75,10 +75,18 @@ type FlowEdgeData = {
   delay: number;
   packets?: number;
   /** Keep the label off the line so packets stay visible. */
-  labelAt?: 'above' | 'beside';
+  labelAt?: 'above' | 'below' | 'beside';
 };
 
-function FlowEdge({ sourceX, sourceY, targetX, targetY, sourcePosition, targetPosition, data }: EdgeProps<Edge<FlowEdgeData>>) {
+function FlowEdge({
+  sourceX,
+  sourceY,
+  targetX,
+  targetY,
+  sourcePosition,
+  targetPosition,
+  data,
+}: EdgeProps<Edge<FlowEdgeData>>) {
   const still = useContext(StillContext);
   const [path, labelX, labelY] = getSmoothStepPath({
     sourceX,
@@ -125,10 +133,11 @@ function FlowEdge({ sourceX, sourceY, targetX, targetY, sourcePosition, targetPo
             className={`vf-edge-label ${kind}`}
             style={
               {
-                transform:
-                  data.labelAt === 'beside'
-                    ? `translate(14px, -50%) translate(${labelX}px, ${labelY}px)`
-                    : `translate(-50%, -100%) translate(${labelX}px, ${labelY - 8}px)`,
+                transform: {
+                  beside: `translate(14px, -50%) translate(${labelX}px, ${labelY}px)`,
+                  below: `translate(-50%, 0) translate(${labelX}px, ${labelY + 8}px)`,
+                  above: `translate(-50%, -100%) translate(${labelX}px, ${labelY - 8}px)`,
+                }[data.labelAt ?? 'above'],
                 '--delay': `${delay}s`,
               } as CSSProperties
             }
@@ -295,7 +304,7 @@ const edge = (
   sourceSide: string,
   target: string,
   targetSide: string,
-  data: FlowEdgeData,
+  data: FlowEdgeData
 ): Edge<FlowEdgeData> => ({
   id,
   source,
@@ -321,18 +330,24 @@ const edges: Edge<FlowEdgeData>[] = [
     labelAt: 'beside',
   }),
   edge('photos-pipeline', 'photos', 'right', 'pipeline', 'left', { kind: 'data', label: 'images', delay: T.data }),
-  edge('pipeline-delta', 'pipeline', 'right', 'delta', 'left', { kind: 'data', label: 'typed rows', delay: T.data + 0.8 }),
+  edge('pipeline-delta', 'pipeline', 'right', 'delta', 'left', {
+    kind: 'data',
+    label: 'typed rows',
+    delay: T.data + 0.8,
+  }),
   edge('delta-dashboard', 'delta', 'top', 'dashboard', 'bottom', {
     kind: 'data',
     label: 'queries',
     delay: T.data + 1.6,
     packets: 2,
+    labelAt: 'below',
   }),
   edge('delta-genie', 'delta', 'top', 'genie', 'bottom', {
     kind: 'data',
     label: 'questions',
     delay: T.data + 1.6,
     packets: 2,
+    labelAt: 'below',
   }),
 ];
 

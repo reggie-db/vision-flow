@@ -219,7 +219,9 @@ export function useDocumentCamera({ captureGuide, videoRef }: UseDocumentCameraO
         const analysisHeight = Math.max(160, Math.min(280, Math.round(canvas.width / (displayAspect || 0.75))));
         if (canvas.height !== analysisHeight) canvas.height = analysisHeight;
         drawVisibleFrame(context, source, canvas.width, canvas.height);
-        setAnalysis(analyzeFocus(context.getImageData(0, 0, canvas.width, canvas.height), captureGuideBounds(captureGuide)));
+        setAnalysis(
+          analyzeFocus(context.getImageData(0, 0, canvas.width, canvas.height), captureGuideBounds(captureGuide))
+        );
       }
       if (!cancelled) timer = window.setTimeout(inspect, 220);
     };

@@ -54,7 +54,12 @@ export const DEFAULT_CATEGORY_CONTRACT: CategoryContract = {
 };
 
 export function normalizePrompt(prompt: string): string {
-  return prompt.trim().toLowerCase().replaceAll(/[^a-z0-9]+/g, ' ').replaceAll(/\s+/g, ' ').trim();
+  return prompt
+    .trim()
+    .toLowerCase()
+    .replaceAll(/[^a-z0-9]+/g, ' ')
+    .replaceAll(/\s+/g, ' ')
+    .trim();
 }
 
 export function normalizeSlug(value: string): string {
@@ -96,7 +101,9 @@ function canonicalField(field: ContractField) {
         name: field.name,
         type: field.type,
         required: field.required,
-        itemFields: [...field.itemFields].sort((left, right) => left.name.localeCompare(right.name)).map(canonicalScalar),
+        itemFields: [...field.itemFields]
+          .sort((left, right) => left.name.localeCompare(right.name))
+          .map(canonicalScalar),
       }
     : canonicalScalar(field);
 }
@@ -116,8 +123,11 @@ export function contractSearchText(slug: string, description: string, contract: 
   const fields = contract.fields
     .flatMap((field) =>
       field.type === 'array'
-        ? [`${field.name}: ${field.description}`, ...field.itemFields.map((item) => `${field.name}.${item.name}: ${item.description}`)]
-        : [`${field.name}: ${field.description}`],
+        ? [
+            `${field.name}: ${field.description}`,
+            ...field.itemFields.map((item) => `${field.name}.${item.name}: ${item.description}`),
+          ]
+        : [`${field.name}: ${field.description}`]
     )
     .join('\n');
   return [slug, description, contract.documentIntent, contract.extractionInstructions, fields].join('\n');
@@ -183,7 +193,7 @@ export function extractionJsonSchema(contract: CategoryContract): Record<string,
         additionalProperties: false,
         required: contract.fields.map((field) => field.name),
         properties: Object.fromEntries(
-          contract.fields.map((field) => [field.name, field.type === 'array' ? arraySchema(field) : valueSchema(field)]),
+          contract.fields.map((field) => [field.name, field.type === 'array' ? arraySchema(field) : valueSchema(field)])
         ),
       },
     },

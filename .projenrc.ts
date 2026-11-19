@@ -1,6 +1,6 @@
 import { project, projectJs } from "@dbx-tools/projen";
 import { readFileSync } from "node:fs";
-import { YamlFile } from "projen";
+import { javascript, YamlFile } from "projen";
 
 const dbxToolsVersion = "^0.9.211";
 
@@ -134,6 +134,11 @@ project.applyToProjects(rootProject, { path: "packages/app" }, (app) => {
     "vite@npm:rolldown-vite@7.1.14",
   );
   app.tasks.tryFind("dev")?.reset("bun --watch scripts/local-start.ts", { receiveArgs: true });
+  const serverTsconfig = app.components.find(
+    (component): component is javascript.TypescriptConfig =>
+      component instanceof javascript.TypescriptConfig && component.fileName === "tsconfig.server.json",
+  );
+  serverTsconfig?.addInclude("scripts/**/*.ts");
 });
 
 const rootDev = rootProject.addTask("dev", {

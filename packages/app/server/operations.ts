@@ -22,7 +22,7 @@ export function createOperation(prompt: string, idempotencyKey: string): { id: s
 
 export function appendOperationEvent(
   operationId: string,
-  event: Omit<OperationEvent, 'sequence' | 'createdAt'>,
+  event: Omit<OperationEvent, 'sequence' | 'createdAt'>
 ): OperationEvent {
   const operation = operations.get(operationId);
   if (!operation) throw new Error(`Unknown operation ${operationId}.`);

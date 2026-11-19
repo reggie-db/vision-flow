@@ -14,11 +14,9 @@
 
 .operations-shell {
   position: relative;
-  display: grid;
   width: 100%;
   height: 100dvh;
   min-width: 0;
-  grid-template-rows: 64px minmax(0, 1fr);
   color: var(--brand-color-foreground);
   background: var(--brand-color-surface);
   overflow: hidden;
@@ -32,10 +30,11 @@
 }
 
 .operations-header {
-  display: flex;
+  display: grid;
+  min-width: 0;
   align-items: center;
-  justify-content: space-between;
-  gap: 20px;
+  grid-template-columns: max-content minmax(0, 1fr) max-content;
+  gap: 28px;
   padding: 0 24px;
   border-bottom: 1px solid var(--brand-color-border);
   background: var(--background);
@@ -84,22 +83,23 @@
 
 .operations-tabs {
   display: grid !important;
+  width: 100%;
+  height: 100%;
   min-width: 0;
   min-height: 0;
-  grid-template-rows: 49px minmax(0, 1fr);
+  grid-template-rows: 64px minmax(0, 1fr);
   overflow: hidden;
 }
 
-.operations-tabs > [role='tablist'] {
+.operations-header > [role='tablist'] {
   width: auto;
-  height: 49px;
+  height: auto;
   justify-content: flex-start;
   gap: 2px;
-  padding: 7px 24px;
+  padding: 0;
   border: 0;
-  border-bottom: 1px solid var(--brand-color-border);
   border-radius: 0;
-  background: var(--background);
+  background: transparent;
   overflow-x: auto;
 }
 
@@ -805,11 +805,6 @@
     padding: 10px;
   }
 
-  .operations-tabs > [role='tablist'] {
-    padding-right: 10px;
-    padding-left: 10px;
-  }
-
   .schema-workspace,
   .schema-loading {
     grid-template-columns: 190px minmax(0, 1fr);
@@ -832,6 +827,19 @@
 }
 
 @media (max-width: 640px) {
+  .operations-header {
+    gap: 10px;
+    padding: 0 10px;
+  }
+
+  .operations-brand {
+    gap: 8px;
+  }
+
+  .operations-brand > div {
+    display: none;
+  }
+
   .operations-header button {
     padding-right: 10px;
     padding-left: 10px;

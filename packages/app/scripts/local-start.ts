@@ -25,13 +25,13 @@ const dashboardPayload = (await dashboardResponse.json()) as {
   dashboards?: Array<{ dashboard_id?: string; display_name?: string; lifecycle_state?: string }>;
 };
 const dashboardId = dashboardPayload.dashboards?.find(
-  (dashboard) => dashboard.display_name === dashboardDisplayName && dashboard.lifecycle_state !== 'TRASHED',
+  (dashboard) => dashboard.display_name === dashboardDisplayName && dashboard.lifecycle_state !== 'TRASHED'
 )?.dashboard_id;
 const secretScope = variable('lakebase_secret_scope');
 const passwordKey = variable('lakebase_password_key');
 const secretResponse = await fetch(
   `${auth.host.replace(/\/$/, '')}/api/2.0/secrets/get?scope=${encodeURIComponent(secretScope)}&key=${encodeURIComponent(passwordKey)}`,
-  { headers: await auth.headers() },
+  { headers: await auth.headers() }
 );
 if (!secretResponse.ok) {
   throw new Error(`Could not read ${secretScope}/${passwordKey}: ${await secretResponse.text()}`);
@@ -46,7 +46,7 @@ const databaseName = variable('lakebase_database_name');
 const roleName = variable('lakebase_role_name');
 const resolved = await createLakebaseClient({ profile }).resolve(
   { project, branch, endpointId, database: databaseName },
-  profile,
+  profile
 );
 const volumeFullName = [variable('catalog'), variable('schema'), variable('documents_volume_name')].join('.');
 

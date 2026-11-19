@@ -1,5 +1,5 @@
-import { configUtils } from '@dbx-tools/core';
 import { client } from '@dbx-tools/auth';
+import { configUtils } from '@dbx-tools/core';
 import { createLakebaseClient } from '@dbx-tools/lakebase';
 import { postgresConnectionOptions, quotePostgresIdentifier } from '@dbx-tools/postgres';
 import { Pool } from 'pg';
@@ -13,7 +13,9 @@ const variables = z
   .parse((bundle as { variables?: unknown } | undefined)?.variables);
 
 function variable(name: string): string {
-  const value = z.union([z.string(), z.number(), z.boolean()]).parse(variables[name]?.value ?? variables[name]?.default);
+  const value = z
+    .union([z.string(), z.number(), z.boolean()])
+    .parse(variables[name]?.value ?? variables[name]?.default);
   return z.string().min(1).parse(String(value));
 }
 
@@ -29,9 +31,9 @@ async function ensureSecretScope(scope: string): Promise<void> {
   const listed = await request('/api/2.0/secrets/scopes/list');
   if (!listed.ok) throw new Error(`Could not list secret scopes: ${await listed.text()}`);
   const payload = await listed.json();
-  const scopes = z.array(z.object({ name: z.string() })).parse(
-    Array.isArray(payload) ? payload : (payload as { scopes?: unknown }).scopes,
-  );
+  const scopes = z
+    .array(z.object({ name: z.string() }))
+    .parse(Array.isArray(payload) ? payload : (payload as { scopes?: unknown }).scopes);
   if (scopes.some((item) => item.name === scope)) return;
   const created = await request('/api/2.0/secrets/scopes/create', {
     method: 'POST',
@@ -53,7 +55,7 @@ async function transferSchemaOwnership(pool: Pool, schemaName: string, roleName:
   const role = quotePostgresIdentifier(roleName);
   const exists = await pool.query<{ exists: boolean }>(
     'SELECT EXISTS (SELECT 1 FROM pg_namespace WHERE nspname = $1) AS exists',
-    [schemaName],
+    [schemaName]
   );
   if (!exists.rows[0]?.exists) {
     await pool.query(`SET ROLE ${role}`);
@@ -71,16 +73,11 @@ async function transferSchemaOwnership(pool: Pool, schemaName: string, roleName:
        JOIN pg_namespace n ON n.oid = c.relnamespace
       WHERE n.nspname = $1
         AND c.relkind IN ('r', 'p', 'v', 'm', 'f')`,
-    [schemaName],
+    [schemaName]
   );
   for (const relation of relations.rows) {
     const name = `${schema}.${quotePostgresIdentifier(relation.name)}`;
-    const relationType =
-      relation.kind === 'v'
-          ? 'VIEW'
-          : relation.kind === 'm'
-            ? 'MATERIALIZED VIEW'
-            : 'TABLE';
+    const relationType = relation.kind === 'v' ? 'VIEW' : relation.kind === 'm' ? 'MATERIALIZED VIEW' : 'TABLE';
     await pool.query(`ALTER ${relationType} ${name} OWNER TO ${role}`);
   }
   await pool.query(`ALTER SCHEMA ${schema} OWNER TO ${role}`);
@@ -121,23 +118,29 @@ const adminPool = new Pool(
     password: oauthPassword,
     ssl: { rejectUnauthorized: true },
     max: 1,
-  }),
+  })
 );
 try {
-  const currentUser = z.string().min(1).parse((await adminPool.query<{ current_user: string }>('SELECT current_user')).rows[0]?.current_user);
+  const currentUser = z
+    .string()
+    .min(1)
+    .parse((await adminPool.query<{ current_user: string }>('SELECT current_user')).rows[0]?.current_user);
   const roleIdentifier = quotePostgresIdentifier(roleName);
   const passwordLiteral = `'${runtimePassword.replaceAll("'", "''")}'`;
-  const existing = await adminPool.query<{ exists: boolean }>('SELECT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = $1)', [roleName]);
+  const existing = await adminPool.query<{ exists: boolean }>(
+    'SELECT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = $1)',
+    [roleName]
+  );
   if (existing.rows[0]?.exists) {
     await adminPool.query(`ALTER ROLE ${roleIdentifier} WITH LOGIN PASSWORD ${passwordLiteral}`);
   } else {
     await adminPool.query(`CREATE ROLE ${roleIdentifier} WITH LOGIN PASSWORD ${passwordLiteral}`);
   }
   await adminPool.query(`GRANT ${roleIdentifier} TO ${quotePostgresIdentifier(currentUser)}`);
+  await adminPool.query(`GRANT ${roleIdentifier} TO ${quotePostgresIdentifier(appServicePrincipalClientId)}`);
   await adminPool.query(
-    `GRANT ${roleIdentifier} TO ${quotePostgresIdentifier(appServicePrincipalClientId)}`,
+    `GRANT CONNECT, CREATE ON DATABASE ${quotePostgresIdentifier(databaseName)} TO ${roleIdentifier}`
   );
-  await adminPool.query(`GRANT CONNECT, CREATE ON DATABASE ${quotePostgresIdentifier(databaseName)} TO ${roleIdentifier}`);
   await adminPool.query(`ALTER DATABASE ${quotePostgresIdentifier(databaseName)} OWNER TO ${roleIdentifier}`);
   const metaSchema = quotePostgresIdentifier(variable('meta_schema'));
   await adminPool.query(`CREATE SCHEMA IF NOT EXISTS ${metaSchema} AUTHORIZATION ${roleIdentifier}`);
@@ -187,7 +190,13 @@ Object.assign(process.env, {
   DATABRICKS_CONFIG_PROFILE: profile,
 });
 
-const [{ database }, { migrateRegistry }, { ensureDemoCategories }, { ensureVisionStorage }, { ensureVisionGenieSpace }] = await Promise.all([
+const [
+  { database },
+  { migrateRegistry },
+  { ensureDemoCategories },
+  { ensureVisionStorage },
+  { ensureVisionGenieSpace },
+] = await Promise.all([
   import('../server/database.ts'),
   import('../server/migrations.ts'),
   import('../server/category-provisioner.ts'),

@@ -94,35 +94,34 @@ export function OperationsView() {
         <div className="operations-resource-indicator">
           <ResourceStatusIndicator position="top-center" />
         </div>
-        <header className="operations-header">
-          <div className="operations-brand">
-            <BrandIcon className="operations-mark" alt="Vision Flow" />
-            <div>
-              <strong>Vision Flow</strong>
-              <span>Operations</span>
-            </div>
-          </div>
-          <Button
-            className="operations-mobile-button"
-            size="icon"
-            onClick={() => window.location.assign('/mobile')}
-            aria-label="Open mobile capture"
-            title="Open mobile capture"
-          >
-            <svg viewBox="0 0 24 24" aria-hidden="true">
-              <path d="M9 5.5 10.2 4h3.6L15 5.5h3A2.5 2.5 0 0 1 20.5 8v8A2.5 2.5 0 0 1 18 18.5H6A2.5 2.5 0 0 1 3.5 16V8A2.5 2.5 0 0 1 6 5.5h3Z" />
-              <circle cx="12" cy="12" r="3.25" />
-            </svg>
-          </Button>
-        </header>
-
         <Tabs defaultValue="dashboard" className="operations-tabs">
-          <TabsList aria-label="Operations views">
-            <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
-            <TabsTrigger value="schemas">Schemas</TabsTrigger>
-            <TabsTrigger value="activity">Activity</TabsTrigger>
-            <TabsTrigger value="info">Info</TabsTrigger>
-          </TabsList>
+          <header className="operations-header">
+            <div className="operations-brand">
+              <BrandIcon className="operations-mark" alt="Vision Flow" />
+              <div>
+                <strong>Vision Flow</strong>
+                <span>Operations</span>
+              </div>
+            </div>
+            <TabsList aria-label="Operations views">
+              <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
+              <TabsTrigger value="schemas">Schemas</TabsTrigger>
+              <TabsTrigger value="activity">Activity</TabsTrigger>
+              <TabsTrigger value="info">Info</TabsTrigger>
+            </TabsList>
+            <Button
+              className="operations-mobile-button"
+              size="icon"
+              onClick={() => window.location.assign('/mobile')}
+              aria-label="Open mobile capture"
+              title="Open mobile capture"
+            >
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M9 5.5 10.2 4h3.6L15 5.5h3A2.5 2.5 0 0 1 20.5 8v8A2.5 2.5 0 0 1 18 18.5H6A2.5 2.5 0 0 1 3.5 16V8A2.5 2.5 0 0 1 6 5.5h3Z" />
+                <circle cx="12" cy="12" r="3.25" />
+              </svg>
+            </Button>
+          </header>
           <TabsContent value="dashboard" className="operations-tab-panel">
             <DashboardWorkspace />
           </TabsContent>

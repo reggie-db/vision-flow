@@ -7,9 +7,9 @@ import { createRoot } from 'react-dom/client';
 import './index.css';
 import './scanner.css';
 import './operations.css';
-import brandInput from '../../branding/brand.json';
 import App from './App.tsx';
 import { ErrorBoundary } from './ErrorBoundary.tsx';
+import brandInput from '../../branding/brand.json';
 
 // Apply tokens, title, and favicon before the first paint; BrandProvider then
 // serves the same context to BrandIcon, BrandLogo, and chat exports.

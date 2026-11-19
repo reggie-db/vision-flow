@@ -17,7 +17,12 @@ type Slide = { id: string; title: string; render: (still: boolean) => ReactNode 
 
 function Receipt() {
   return (
-    <svg viewBox="140 10 280 620" className="vf-receipt" role="img" aria-label="Lottery receipt with four fields highlighted">
+    <svg
+      viewBox="140 10 280 620"
+      className="vf-receipt"
+      role="img"
+      aria-label="Lottery receipt with four fields highlighted"
+    >
       <rect className="paper" x="150" y="20" width="260" height="600" rx="6" />
       <path
         className="paper"
@@ -156,10 +161,7 @@ function SignedDocument() {
         <rect x="90" y="204" width="30" height="4" rx="2" opacity=".4" />
         <rect x="176" y="204" width="20" height="4" rx="2" opacity=".4" />
       </g>
-      <path
-        className="signature"
-        d="M94 190c8-14 14-16 16-8s-4 10 2 2 10-14 12-6 6 8 12 0 8-4 10 2"
-      />
+      <path className="signature" d="M94 190c8-14 14-16 16-8s-4 10 2 2 10-14 12-6 6 8 12 0 8-4 10 2" />
     </svg>
   );
 }
@@ -352,12 +354,15 @@ function SlideFrame({ slide, still }: { slide: Slide; still: boolean }) {
 }
 
 export interface InfoDeckProps {
-  /** `print` stacks every slide at full size with no motion (PDF and screenshots). */
-  mode?: 'interactive' | 'print';
+  /**
+   * `print` stacks every slide at full size with no motion (PDF). `slide` renders one
+   * slide at full size in its final animation state (PNG screenshots).
+   */
+  mode?: 'interactive' | 'print' | 'slide';
   initialSlide?: number;
   /** Listen for arrow keys on the window (standalone page) instead of only when focused. */
   globalKeys?: boolean;
-  /** Render the final animation state (screenshots of a single slide). */
+  /** Render the final animation state without motion. */
   still?: boolean;
 }
 
@@ -368,7 +373,7 @@ export function InfoDeck({ mode = 'interactive', initialSlide = 0, globalKeys = 
 
   const show = (next: number) => setIndex(Math.min(Math.max(next, 0), slides.length - 1));
   const step = (key: string) =>
-    ({ ArrowRight: 1, PageDown: 1, ArrowLeft: -1, PageUp: -1 } as Record<string, number>)[key];
+    (({ ArrowRight: 1, PageDown: 1, ArrowLeft: -1, PageUp: -1 }) as Record<string, number>)[key];
 
   useLayoutEffect(() => {
     const viewport = viewportRef.current;
@@ -394,6 +399,14 @@ export function InfoDeck({ mode = 'interactive', initialSlide = 0, globalKeys = 
     addEventListener('keydown', onKey);
     return () => removeEventListener('keydown', onKey);
   }, [globalKeys]);
+
+  if (mode === 'slide') {
+    return (
+      <div className="vf-deck print">
+        <SlideFrame slide={slides[index]!} still />
+      </div>
+    );
+  }
 
   if (mode === 'print') {
     return (
@@ -454,7 +467,12 @@ export function InfoDeck({ mode = 'interactive', initialSlide = 0, globalKeys = 
             />
           ))}
         </div>
-        <button type="button" className="primary" onClick={() => show(index + 1)} disabled={index === slides.length - 1}>
+        <button
+          type="button"
+          className="primary"
+          onClick={() => show(index + 1)}
+          disabled={index === slides.length - 1}
+        >
           Next
         </button>
       </nav>

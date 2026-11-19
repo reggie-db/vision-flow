@@ -2,20 +2,10 @@ import { files, server } from '@databricks/appkit';
 import { appkit, loadBrandContext } from '@dbx-tools/appkit';
 import { agents, genie, mastra } from '@dbx-tools/appkit-mastra';
 import { email } from '@dbx-tools/email';
+import type { TopicMessage } from '@dbx-tools/postgres';
 import { log, toError } from '@dbx-tools/shared-core';
 import { authGate } from '@dbx-tools/tunnel';
-import type { TopicMessage } from '@dbx-tools/postgres';
 import { z } from 'zod';
-import {
-  MobileViewActivityRequestSchema,
-  CategoryDeleteRequestSchema,
-  CategoryRenameRequestSchema,
-  CategoryResolveRequestSchema,
-  CaptureGuideRequestSchema,
-  ImageUploadRequestSchema,
-  type OperationEvent,
-  type UploadResponse,
-} from '../shared/vision-contracts.ts';
 import { ACTIVITY_TOPIC, activityBus, publishActivity } from './activity.ts';
 import {
   deleteCategoryAndRefresh,
@@ -29,6 +19,16 @@ import { migrateRegistry } from './migrations.ts';
 import { quickImageGate } from './model-gateway.ts';
 import { createOperation, listOperationEvents, subscribeOperation } from './operations.ts';
 import { deletePrompt, getCategory, getSchemaVersion, listCategories, setCategoryCaptureGuide } from './registry.ts';
+import {
+  MobileViewActivityRequestSchema,
+  CategoryDeleteRequestSchema,
+  CategoryRenameRequestSchema,
+  CategoryResolveRequestSchema,
+  CaptureGuideRequestSchema,
+  ImageUploadRequestSchema,
+  type OperationEvent,
+  type UploadResponse,
+} from '../shared/vision-contracts.ts';
 
 const ALLOWED_EMAIL_DOMAINS = ['@databricks.com', '@gulfinc.com'];
 const TUNNEL_ENABLED = Boolean(process.env.TUNNEL_PUBLIC_DOMAIN);

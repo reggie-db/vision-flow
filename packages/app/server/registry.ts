@@ -1,9 +1,9 @@
 import type { PoolClient } from 'pg';
-import type { CaptureGuide, Category, CategoryContract } from '../shared/vision-contracts.ts';
-import type { DashboardPagePlan } from './model-gateway.ts';
-import { database } from './database.ts';
 import { config } from './config.ts';
+import { database } from './database.ts';
+import type { DashboardPagePlan } from './model-gateway.ts';
 import { normalizePrompt } from './schema-contract.ts';
+import type { CaptureGuide, Category, CategoryContract } from '../shared/vision-contracts.ts';
 
 interface CategoryRow {
   id: string;
@@ -92,14 +92,16 @@ const categorySelect = `
 `;
 
 export async function listCategories(): Promise<Category[]> {
-  const result = await database.query<CategoryRow>(`${categorySelect} GROUP BY c.id, sv.fingerprint, sv.contract ORDER BY c.created_at`);
+  const result = await database.query<CategoryRow>(
+    `${categorySelect} GROUP BY c.id, sv.fingerprint, sv.contract ORDER BY c.created_at`
+  );
   return result.rows.map(mapCategory);
 }
 
 export async function getCategory(categoryId: string): Promise<Category | undefined> {
   const result = await database.query<CategoryRow>(
     `${categorySelect} WHERE c.id = $1 GROUP BY c.id, sv.fingerprint, sv.contract`,
-    [categoryId],
+    [categoryId]
   );
   return result.rows[0] ? mapCategory(result.rows[0]) : undefined;
 }
@@ -107,15 +109,18 @@ export async function getCategory(categoryId: string): Promise<Category | undefi
 export async function findCategoryByPrompt(prompt: string): Promise<Category | undefined> {
   const result = await database.query<{ category_id: string }>(
     `SELECT category_id FROM ${relation('category_prompts')} WHERE normalized_prompt = $1`,
-    [normalizePrompt(prompt)],
+    [normalizePrompt(prompt)]
   );
   return result.rows[0] ? getCategory(result.rows[0].category_id) : undefined;
 }
 
-export async function findCategoryByFingerprint(fingerprint: string, client: PoolClient = database as never): Promise<Category | undefined> {
+export async function findCategoryByFingerprint(
+  fingerprint: string,
+  client: PoolClient = database as never
+): Promise<Category | undefined> {
   const result = await client.query<{ category_id: string }>(
     `SELECT category_id FROM ${relation('schema_versions')} WHERE fingerprint = $1`,
-    [fingerprint],
+    [fingerprint]
   );
   return result.rows[0] ? getCategory(result.rows[0].category_id) : undefined;
 }
@@ -123,7 +128,7 @@ export async function findCategoryByFingerprint(fingerprint: string, client: Poo
 export async function findCandidateCategories(
   prompt: string,
   embedding?: number[],
-  limit = 5,
+  limit = 5
 ): Promise<CategoryCandidate[]> {
   const textMatches = await database.query<{
     id: string;
@@ -159,7 +164,7 @@ export async function findCandidateCategories(
       GROUP BY c.id, sv.contract, sv.search_document, sv.embedding, search_query.query, prompt_scores.rank
       ORDER BY text_rank DESC, similarity DESC NULLS LAST
       LIMIT $3`,
-    [prompt, embedding ? JSON.stringify(embedding) : null, limit],
+    [prompt, embedding ? JSON.stringify(embedding) : null, limit]
   );
   if (textMatches.rows.length > 0 || !embedding) {
     return textMatches.rows.map((row) => ({
@@ -195,7 +200,7 @@ export async function findCandidateCategories(
       GROUP BY c.id, sv.contract, sv.embedding
       ORDER BY sv.embedding <=> $1::vector
       LIMIT $2`,
-    [JSON.stringify(embedding), limit],
+    [JSON.stringify(embedding), limit]
   );
   return result.rows.map((row) => ({
     id: row.id,
@@ -209,19 +214,24 @@ export async function findCandidateCategories(
   }));
 }
 
-export async function addPrompt(categoryId: string, prompt: string, canonical = false, client: PoolClient = database as never): Promise<void> {
+export async function addPrompt(
+  categoryId: string,
+  prompt: string,
+  canonical = false,
+  client: PoolClient = database as never
+): Promise<void> {
   await client.query(
     `INSERT INTO ${relation('category_prompts')} (id, category_id, prompt, normalized_prompt, canonical)
      VALUES ($1, $2, $3, $4, $5)
      ON CONFLICT (normalized_prompt) DO NOTHING`,
-    [crypto.randomUUID(), categoryId, prompt.trim(), normalizePrompt(prompt), canonical],
+    [crypto.randomUUID(), categoryId, prompt.trim(), normalizePrompt(prompt), canonical]
   );
 }
 
 export async function deletePrompt(categoryId: string, promptId: string): Promise<boolean> {
   const result = await database.query(
     `DELETE FROM ${relation('category_prompts')} WHERE id = $1 AND category_id = $2`,
-    [promptId, categoryId],
+    [promptId, categoryId]
   );
   return (result.rowCount ?? 0) > 0;
 }
@@ -240,7 +250,7 @@ export async function insertCategory(
     searchText: string;
     embedding: number[];
     prompt: string;
-  },
+  }
 ): Promise<void> {
   await client.query(
     `INSERT INTO ${relation('categories')}
@@ -254,7 +264,7 @@ export async function insertCategory(
       input.captureGuide,
       config.documentsTable,
       `${config.genieCatalog}.${config.genieSchema}.${config.documentsTable}`,
-    ],
+    ]
   );
   await client.query(
     `INSERT INTO ${relation('schema_versions')}
@@ -267,7 +277,7 @@ export async function insertCategory(
       JSON.stringify(input.extractionSchema),
       input.searchText,
       JSON.stringify(input.embedding),
-    ],
+    ]
   );
   await addPrompt(input.id, input.prompt, true, client);
 }
@@ -275,7 +285,7 @@ export async function insertCategory(
 export async function setCategoryDashboardPlan(categoryId: string, plan: DashboardPagePlan): Promise<void> {
   await database.query(
     `UPDATE ${relation('categories')} SET dashboard_plan = $2::jsonb, updated_at = NOW() WHERE id = $1`,
-    [categoryId, JSON.stringify(plan)],
+    [categoryId, JSON.stringify(plan)]
   );
 }
 
@@ -293,7 +303,7 @@ export async function listDashboardCategories(): Promise<DashboardCategoryRecord
        JOIN ${relation('schema_versions')} sv
          ON sv.category_id = c.id AND sv.version = c.active_schema_version
       WHERE c.status <> 'failed'
-      ORDER BY c.created_at`,
+      ORDER BY c.created_at`
   );
   return result.rows.map((row) => ({
     id: row.id,
@@ -308,7 +318,7 @@ export async function listDashboardCategories(): Promise<DashboardCategoryRecord
 export async function renameCategory(categoryId: string, displayName: string): Promise<boolean> {
   const result = await database.query(
     `UPDATE ${relation('categories')} SET display_name = $2, dashboard_plan = NULL, updated_at = NOW() WHERE id = $1`,
-    [categoryId, displayName.trim()],
+    [categoryId, displayName.trim()]
   );
   return (result.rowCount ?? 0) > 0;
 }
@@ -316,7 +326,7 @@ export async function renameCategory(categoryId: string, displayName: string): P
 export async function setCategoryCaptureGuide(categoryId: string, captureGuide: CaptureGuide): Promise<boolean> {
   const result = await database.query(
     `UPDATE ${relation('categories')} SET capture_guide = $2, updated_at = NOW() WHERE id = $1`,
-    [categoryId, captureGuide],
+    [categoryId, captureGuide]
   );
   return (result.rowCount ?? 0) > 0;
 }
@@ -329,7 +339,7 @@ export async function deleteCategory(categoryId: string): Promise<boolean> {
 export async function setCategoryStatus(categoryId: string, status: Category['status'], error?: string): Promise<void> {
   await database.query(
     `UPDATE ${relation('categories')} SET status = $2, error = $3, updated_at = NOW() WHERE id = $1`,
-    [categoryId, status, error ?? null],
+    [categoryId, status, error ?? null]
   );
 }
 
@@ -344,7 +354,7 @@ export async function getSchemaVersion(categoryId: string, version: number): Pro
     `SELECT category_id, version, fingerprint, contract, extraction_schema
        FROM ${relation('schema_versions')}
       WHERE category_id = $1 AND version = $2`,
-    [categoryId, version],
+    [categoryId, version]
   );
   const row = result.rows[0];
   return row

@@ -1,21 +1,13 @@
 import { createHash } from 'node:crypto';
 import { withAdvisoryLock } from '@dbx-tools/postgres';
 import { z } from 'zod';
-import type { CategoryContract, ScalarField } from '../shared/vision-contracts.ts';
 import { config } from './config.ts';
 import { database } from './database.ts';
 import { DatabricksApiError, databricksJson } from './databricks-api.ts';
-import {
-  DashboardPagePlanSchema,
-  generateDashboardPagePlan,
-  type DashboardPagePlan,
-} from './model-gateway.ts';
-import {
-  listDashboardCategories,
-  setCategoryDashboardPlan,
-  type DashboardCategoryRecord,
-} from './registry.ts';
+import { DashboardPagePlanSchema, generateDashboardPagePlan, type DashboardPagePlan } from './model-gateway.ts';
+import { listDashboardCategories, setCategoryDashboardPlan, type DashboardCategoryRecord } from './registry.ts';
 import { executeWarehouseSql } from './sql-warehouse.ts';
+import type { CategoryContract, ScalarField } from '../shared/vision-contracts.ts';
 
 const DashboardSchema = z.object({
   dashboard_id: z.string(),
@@ -53,7 +45,9 @@ function fallbackPlan(category: DashboardCategoryRecord): DashboardPagePlan {
   return {
     title: category.displayName,
     subtitle: category.description,
-    metricField: fields.find((field) => field.type === 'currency' || field.type === 'number' || field.type === 'integer')?.name ?? null,
+    metricField:
+      fields.find((field) => field.type === 'currency' || field.type === 'number' || field.type === 'integer')?.name ??
+      null,
     groupingField: fields.find((field) => field.type === 'string' || field.type === 'boolean')?.name ?? null,
     dateField: fields.find((field) => field.type === 'date')?.name ?? null,
     detailFields: fields.slice(0, 8).map((field) => field.name),
@@ -66,7 +60,9 @@ function normalizePlan(category: DashboardCategoryRecord, proposed: DashboardPag
   const metric = proposed.metricField ? byName.get(proposed.metricField) : undefined;
   const grouping = proposed.groupingField ? byName.get(proposed.groupingField) : undefined;
   const date = proposed.dateField ? byName.get(proposed.dateField) : undefined;
-  const detailFields = proposed.detailFields.filter((name, index, values) => byName.has(name) && values.indexOf(name) === index).slice(0, 8);
+  const detailFields = proposed.detailFields
+    .filter((name, index, values) => byName.has(name) && values.indexOf(name) === index)
+    .slice(0, 8);
   const fallback = fallbackPlan(category);
   return {
     title: proposed.title.trim() || fallback.title,
@@ -129,7 +125,7 @@ function counterWidget(
   fieldName: string,
   expression: string,
   x: number,
-  format?: JsonRecord,
+  format?: JsonRecord
 ): JsonRecord {
   return {
     widget: {
@@ -235,7 +231,12 @@ function fieldFormat(field: ScalarField): JsonRecord | undefined {
   return undefined;
 }
 
-function metricWidget(category: DashboardCategoryRecord, datasetName: string, plan: DashboardPagePlan, y: number): JsonRecord | undefined {
+function metricWidget(
+  category: DashboardCategoryRecord,
+  datasetName: string,
+  plan: DashboardPagePlan,
+  y: number
+): JsonRecord | undefined {
   if (!plan.metricField) return undefined;
   const field = scalarFields(category.contract).find((candidate) => candidate.name === plan.metricField);
   if (!field) return undefined;
@@ -279,9 +280,16 @@ function metricWidget(category: DashboardCategoryRecord, datasetName: string, pl
   };
 }
 
-function tableWidget(category: DashboardCategoryRecord, datasetName: string, plan: DashboardPagePlan, y: number): JsonRecord {
+function tableWidget(
+  category: DashboardCategoryRecord,
+  datasetName: string,
+  plan: DashboardPagePlan,
+  y: number
+): JsonRecord {
   const byName = new Map(scalarFields(category.contract).map((field) => [field.name, field]));
-  const selected = plan.detailFields.map((name) => byName.get(name)).filter((field): field is ScalarField => Boolean(field));
+  const selected = plan.detailFields
+    .map((name) => byName.get(name))
+    .filter((field): field is ScalarField => Boolean(field));
   const fields = [
     { name: 'processed_at', expression: '`processed_at`', label: 'Processed' },
     { name: 'generic_description', expression: '`generic_description`', label: 'Description' },
@@ -308,7 +316,9 @@ function tableWidget(category: DashboardCategoryRecord, datasetName: string, pla
           columns: fields.map((field) => ({
             fieldName: field.name,
             displayName: field.label,
-            ...('field' in field && field.field && fieldFormat(field.field) ? { format: fieldFormat(field.field) } : {}),
+            ...('field' in field && field.field && fieldFormat(field.field)
+              ? { format: fieldFormat(field.field) }
+              : {}),
           })),
         },
         frame: { showTitle: true, title: 'Latest scans' },
@@ -318,7 +328,10 @@ function tableWidget(category: DashboardCategoryRecord, datasetName: string, pla
   };
 }
 
-function page(category: DashboardCategoryRecord, plan: DashboardPagePlan): { dataset: JsonRecord; page: JsonRecord; sql: string } {
+function page(
+  category: DashboardCategoryRecord,
+  plan: DashboardPagePlan
+): { dataset: JsonRecord; page: JsonRecord; sql: string } {
   const datasetName = stableName('schema', category.fingerprint);
   const sql = datasetQuery(category);
   const metric = metricWidget(category, datasetName, plan, 11);
@@ -341,15 +354,10 @@ function page(category: DashboardCategoryRecord, plan: DashboardPagePlan): { dat
         textWidget('subtitle', plan.subtitle, 1),
         counterWidget('total_scans', 'Total scans', datasetName, 'count(document_id)', 'COUNT(`document_id`)', 0),
         counterWidget('needs_review', 'Needs review', datasetName, 'sum(review_flag)', 'SUM(`review_flag`)', 4),
-        counterWidget(
-          'match_rate',
-          'Schema match rate',
-          datasetName,
-          'avg(match_score)',
-          'AVG(`match_score`)',
-          8,
-          { type: 'number-percent', decimalPlaces: { type: 'exact', places: 1 } },
-        ),
+        counterWidget('match_rate', 'Schema match rate', datasetName, 'avg(match_score)', 'AVG(`match_score`)', 8, {
+          type: 'number-percent',
+          decimalPlaces: { type: 'exact', places: 1 },
+        }),
         lineWidget(datasetName, 5),
         reviewWidget(datasetName, 5),
         ...(metric ? [metric] : []),
@@ -384,11 +392,11 @@ async function resolveDashboardId(): Promise<string> {
   const payload = DashboardListSchema.parse(
     await databricksJson('/api/2.0/lakeview/dashboards?page_size=100', {
       signal: AbortSignal.timeout(20_000),
-    }),
+    })
   );
   const dashboards = Array.isArray(payload) ? payload : payload.dashboards;
   const match = dashboards.find(
-    (dashboard) => dashboard.display_name === config.dashboardDisplayName && dashboard.lifecycle_state !== 'TRASHED',
+    (dashboard) => dashboard.display_name === config.dashboardDisplayName && dashboard.lifecycle_state !== 'TRASHED'
   );
   if (!match) throw new Error(`Dashboard ${config.dashboardDisplayName} was not provisioned by the bundle.`);
   return match.dashboard_id;
@@ -398,7 +406,7 @@ async function updateDashboard(dashboardId: string, serialized: string, includeE
   const current = DashboardSchema.parse(
     await databricksJson(`/api/2.0/lakeview/dashboards/${encodeURIComponent(dashboardId)}`, {
       signal: AbortSignal.timeout(20_000),
-    }),
+    })
   );
   await databricksJson(`/api/2.0/lakeview/dashboards/${encodeURIComponent(dashboardId)}`, {
     method: 'PATCH',
@@ -446,8 +454,8 @@ export async function ensureCategoryDashboard(categoryId: string): Promise<strin
       plan = normalizePlan(
         category,
         DashboardPagePlanSchema.parse(
-          await generateDashboardPagePlan(category.displayName, category.description, category.contract),
-        ),
+          await generateDashboardPagePlan(category.displayName, category.description, category.contract)
+        )
       );
     } catch {
       plan = fallbackPlan(category);

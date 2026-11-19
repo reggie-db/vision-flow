@@ -45,8 +45,10 @@ function configuredSources(): JsonRecord[] {
       needs_review: 'True for mismatch, missing required data, low confidence, or processing failure.',
       generic_description: 'Domain-neutral image description suitable for broad text search.',
       full_text: 'Visible text transcribed in reading order.',
-      search_text: 'Concatenated description, visible text, extracted values, and evidence for broad case-insensitive matching.',
-      payload: 'Nested VARIANT extraction. Schema-defined field envelopes are under payload:fields and contain value, confidence, and evidence.',
+      search_text:
+        'Concatenated description, visible text, extracted values, and evidence for broad case-insensitive matching.',
+      payload:
+        'Nested VARIANT extraction. Schema-defined field envelopes are under payload:fields and contain value, confidence, and evidence.',
       warnings: 'Extraction and validation warnings.',
       error: 'Processing error for failed rows.',
       model_service: 'Strong model service used for extraction.',
@@ -86,12 +88,14 @@ async function updateSpace(includeEtag = true): Promise<void> {
   const space = GenieSpaceSchema.parse(
     await databricksJson(
       `/api/2.0/genie/spaces/${encodeURIComponent(config.genieSpaceId)}?include_serialized_space=true`,
-      { signal: AbortSignal.timeout(20_000) },
-    ),
+      { signal: AbortSignal.timeout(20_000) }
+    )
   );
   const sources = configuredSources();
   if (sources.length > config.genieMaxTables) {
-    throw new Error(`Vision Flow requires ${sources.length} Genie sources, above the configured limit of ${config.genieMaxTables}.`);
+    throw new Error(
+      `Vision Flow requires ${sources.length} Genie sources, above the configured limit of ${config.genieMaxTables}.`
+    );
   }
 
   const serialized = record(JSON.parse(space.serialized_space));

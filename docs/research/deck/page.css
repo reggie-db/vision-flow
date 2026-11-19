@@ -1,0 +1,51 @@
+/* Standalone page chrome around the shared Info deck. */
+html,
+body,
+#root {
+  height: 100%;
+  margin: 0;
+}
+body {
+  background: #0e1b20;
+}
+#root {
+  padding: 16px;
+  box-sizing: border-box;
+}
+.vf-deck .vf-controls > button {
+  border-color: transparent;
+}
+.vf-deck .vf-dots button::after {
+  background: rgb(255 255 255 / 30%);
+}
+.vf-deck .vf-dots button.active::after {
+  background: #fff;
+}
+
+/* Screenshot and print renders: slide only, edge to edge. */
+.shot #root {
+  padding: 0;
+}
+.shot .vf-controls {
+  display: none;
+}
+.shot .vf-deck {
+  gap: 0;
+}
+.shot .vf-stage {
+  border-radius: 0;
+  box-shadow: none;
+}
+@media print {
+  @page {
+    size: 1920px 1080px;
+    margin: 0;
+  }
+  html,
+  body,
+  #root {
+    height: auto;
+    padding: 0;
+    background: none;
+  }
+}

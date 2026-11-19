@@ -25,8 +25,10 @@ import {
   Textarea,
 } from '@databricks/appkit-ui/react';
 import { BrandIcon } from '@dbx-tools/ui/branding/react';
-import { BrowserRouter, Route, Routes } from 'react-router-dom';
 import { useEffect, useMemo, useRef, useState, type ChangeEvent, type PointerEvent as ReactPointerEvent } from 'react';
+import { BrowserRouter, Route, Routes } from 'react-router-dom';
+import { useDocumentCamera } from './hooks/use-document-camera.ts';
+import { OperationsView } from './OperationsView.tsx';
 import {
   CaptureGuideSchema,
   CategorySchema,
@@ -38,8 +40,6 @@ import {
   type OperationEvent,
   type UploadResponse,
 } from '../../shared/vision-contracts.ts';
-import { useDocumentCamera } from './hooks/use-document-camera.ts';
-import { OperationsView } from './OperationsView.tsx';
 
 type ScanState = 'scanning' | 'submitting' | 'queued' | 'rejected' | 'error';
 type OperationKind = 'create' | 'rename' | 'delete';
@@ -366,8 +366,9 @@ function ScannerExperience() {
   const removePrompt = async (categoryId: string, promptId: string) => {
     try {
       const response = await fetch(`/api/categories/${categoryId}/prompts/${promptId}`, { method: 'DELETE' });
-      if (!response.ok && response.status !== 404)
+      if (!response.ok && response.status !== 404) {
         throw await responseError(response, 'The prompt could not be removed.');
+      }
       await loadCategories(categoryId);
     } catch (error) {
       setCategoriesError(error instanceof Error ? error.message : 'The prompt could not be removed.');

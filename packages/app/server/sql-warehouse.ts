@@ -30,7 +30,7 @@ async function statement(statement: string): Promise<Statement> {
         row_limit: 1,
       }),
       signal: AbortSignal.timeout(20_000),
-    }),
+    })
   );
 }
 
@@ -38,7 +38,7 @@ async function poll(statementId: string): Promise<Statement> {
   return StatementSchema.parse(
     await databricksJson(`/api/2.0/sql/statements/${encodeURIComponent(statementId)}`, {
       signal: AbortSignal.timeout(15_000),
-    }),
+    })
   );
 }
 

@@ -1,5 +1,4 @@
 import { withAdvisoryTransactionLock } from '@dbx-tools/postgres';
-import type { CaptureGuide, Category, CategoryContract } from '../shared/vision-contracts.ts';
 import { config } from './config.ts';
 import { ensureCategoryDashboard, refreshVisionDashboard } from './dashboard-manager.ts';
 import { database } from './database.ts';
@@ -29,6 +28,7 @@ import {
   humanReadableDisplayName,
   normalizeSlug,
 } from './schema-contract.ts';
+import type { CaptureGuide, Category, CategoryContract } from '../shared/vision-contracts.ts';
 
 interface ProvisionSpec {
   displayName: string;
@@ -134,7 +134,7 @@ async function provisionSpec(spec: ProvisionSpec, operationId?: string): Promise
     const metaSchema = config.metaSchema.replaceAll('"', '""');
     const duplicate = await client.query<{ category_id: string }>(
       `SELECT category_id FROM "${metaSchema}"."schema_versions" WHERE fingerprint = $1`,
-      [fingerprint],
+      [fingerprint]
     );
     if (duplicate.rows[0]) return;
     await insertCategory(client, {
@@ -178,7 +178,7 @@ export async function provisionCategoryFromPrompt(
   operationId: string,
   prompt: string,
   requestedDisplayName?: string,
-  requestedCaptureGuide?: CaptureGuide,
+  requestedCaptureGuide?: CaptureGuide
 ): Promise<void> {
   try {
     emit(operationId, { stage: 'resolving', message: 'Resolving the requested image type and required fields.' });
@@ -213,7 +213,7 @@ export async function provisionCategoryFromPrompt(
           contract: exact.contract,
           prompt,
         },
-        operationId,
+        operationId
       );
       return;
     }
@@ -232,7 +232,9 @@ export async function provisionCategoryFromPrompt(
           : 'No existing schema matched; drafting a new immutable schema.',
     });
     const decision = await decideCategory(prompt, candidates, requestedCaptureGuide);
-    if (decision.action === 'clarify') throw new Error(decision.clarification ?? 'The requested category needs more detail.');
+    if (decision.action === 'clarify') {
+      throw new Error(decision.clarification ?? 'The requested category needs more detail.');
+    }
     if (!decision.contract) throw new Error('The model did not return a complete extraction contract.');
 
     const proposedFingerprint = contractFingerprint(decision.contract);
@@ -248,7 +250,7 @@ export async function provisionCategoryFromPrompt(
             contract: matched.contract,
             prompt,
           },
-          operationId,
+          operationId
         );
         return;
       }
@@ -264,7 +266,7 @@ export async function provisionCategoryFromPrompt(
         prompt,
         embedding: promptEmbedding,
       },
-      operationId,
+      operationId
     );
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
@@ -283,7 +285,8 @@ export async function ensureDefaultCategory(): Promise<Category> {
   return provisionSpec({
     displayName: 'Machine sales',
     slug: DEFAULT_CATEGORY_SLUG,
-    description: 'Machine-generated sales image with jurisdiction, quantity sold, price, date, and optional location details.',
+    description:
+      'Machine-generated sales image with jurisdiction, quantity sold, price, date, and optional location details.',
     captureGuide: 'vertical',
     contract: DEFAULT_CATEGORY_CONTRACT,
     prompt: 'Machine sales image with jurisdiction, quantity sold, price, date, and address when present.',
@@ -308,7 +311,7 @@ export async function ensureDemoCategories(): Promise<Category[]> {
 export async function renameCategoryAndRefresh(
   operationId: string,
   categoryId: string,
-  displayName: string,
+  displayName: string
 ): Promise<void> {
   try {
     const normalizedDisplayName = humanReadableDisplayName(displayName);
@@ -320,7 +323,9 @@ export async function renameCategoryAndRefresh(
       categoryId,
       categorySlug: category.slug,
     });
-    if (!(await renameCategoryRecord(categoryId, normalizedDisplayName))) throw new Error('The selected schema no longer exists.');
+    if (!(await renameCategoryRecord(categoryId, normalizedDisplayName))) {
+      throw new Error('The selected schema no longer exists.');
+    }
     await ensureCategoryDashboard(categoryId);
     emit(operationId, {
       stage: 'ready',

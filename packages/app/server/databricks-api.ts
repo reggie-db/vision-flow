@@ -3,7 +3,7 @@ import { client } from '@dbx-tools/auth';
 export class DatabricksApiError extends Error {
   public constructor(
     public readonly status: number,
-    message: string,
+    message: string
   ) {
     super(message);
     this.name = 'DatabricksApiError';
@@ -27,7 +27,7 @@ export async function databricksJson<T>(path: string, init: RequestInit = {}): P
   if (!response.ok) {
     throw new DatabricksApiError(
       response.status,
-      `Databricks request failed (${response.status}): ${(await response.text()).slice(0, 1_000)}`,
+      `Databricks request failed (${response.status}): ${(await response.text()).slice(0, 1_000)}`
     );
   }
   return (await response.json()) as T;

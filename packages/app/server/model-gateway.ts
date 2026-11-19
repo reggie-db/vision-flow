@@ -1,4 +1,7 @@
 import { z } from 'zod';
+import { config } from './config.ts';
+import { databricksFetch } from './databricks-api.ts';
+import { extractionJsonSchema, requiredFieldNames } from './schema-contract.ts';
 import {
   CategoryContractSchema,
   CaptureGuideSchema,
@@ -8,15 +11,12 @@ import {
   type ContractField,
   type ImageGateResult,
 } from '../shared/vision-contracts.ts';
-import { config } from './config.ts';
-import { databricksFetch } from './databricks-api.ts';
-import { extractionJsonSchema, requiredFieldNames } from './schema-contract.ts';
 
 const GatewayResponseSchema = z.object({
   output: z.array(
     z.object({
       content: z.array(z.object({ text: z.string().optional() })).optional(),
-    }),
+    })
   ),
 });
 
@@ -70,7 +70,7 @@ async function structuredResponse<T>(
     maxOutputTokens?: number;
     model?: string;
     timeoutMs?: number;
-  } = {},
+  } = {}
 ): Promise<T> {
   const content: Array<Record<string, unknown>> = [{ type: 'input_text', text: prompt }];
   if (imageDataUrl) {
@@ -98,26 +98,37 @@ async function structuredResponse<T>(
     }),
     signal: AbortSignal.timeout(options.timeoutMs ?? (imageDataUrl ? 30_000 : 60_000)),
   });
-  if (!response.ok) throw new Error(`Model request failed (${response.status}): ${(await response.text()).slice(0, 500)}`);
+  if (!response.ok) {
+    throw new Error(`Model request failed (${response.status}): ${(await response.text()).slice(0, 500)}`);
+  }
   const parsed = GatewayResponseSchema.parse(await response.json());
-  const text = parsed.output.flatMap((item) => item.content ?? []).flatMap((item) => item.text ?? []).join('').trim();
+  const text = parsed.output
+    .flatMap((item) => item.content ?? [])
+    .flatMap((item) => item.text ?? [])
+    .join('')
+    .trim();
   return schema.parse(JSON.parse(text));
 }
 
 export async function embedText(text: string): Promise<number[]> {
-  const response = await databricksFetch(`/serving-endpoints/${encodeURIComponent(config.embeddingEndpoint)}/invocations`, {
-    method: 'POST',
-    body: JSON.stringify({ input: [text] }),
-    signal: AbortSignal.timeout(20_000),
-  });
-  if (!response.ok) throw new Error(`Embedding request failed (${response.status}): ${(await response.text()).slice(0, 500)}`);
+  const response = await databricksFetch(
+    `/serving-endpoints/${encodeURIComponent(config.embeddingEndpoint)}/invocations`,
+    {
+      method: 'POST',
+      body: JSON.stringify({ input: [text] }),
+      signal: AbortSignal.timeout(20_000),
+    }
+  );
+  if (!response.ok) {
+    throw new Error(`Embedding request failed (${response.status}): ${(await response.text()).slice(0, 500)}`);
+  }
   return EmbeddingResponseSchema.parse(await response.json()).data[0]!.embedding;
 }
 
 export async function decideCategory(
   prompt: string,
   candidates: CandidateCategory[],
-  captureGuide?: CaptureGuide,
+  captureGuide?: CaptureGuide
 ): Promise<CategoryDecision> {
   return structuredResponse(
     'vision_category_decision',
@@ -131,10 +142,12 @@ export async function decideCategory(
       'For a new category, return a concise human-readable displayName in title case. Do not end it with Image, Document, Query, Schema, or Category. Keep internal identifiers in categorySlug only.',
       'Images with repeated line items should use one array field whose itemFields describe each item.',
       'Choose captureGuide=vertical for tall receipts, forms, or portrait documents; horizontal for IDs, cards, and landscape documents; none for open scenes such as counting objects or auditing a room.',
-      captureGuide ? `The user explicitly selected captureGuide=${captureGuide}; return that exact value.` : 'Infer captureGuide from the requested subject.',
+      captureGuide
+        ? `The user explicitly selected captureGuide=${captureGuide}; return that exact value.`
+        : 'Infer captureGuide from the requested subject.',
       `User request: ${prompt}`,
       `Candidates: ${JSON.stringify(candidates)}`,
-    ].join('\n'),
+    ].join('\n')
   );
 }
 
@@ -142,7 +155,7 @@ export async function quickImageGate(
   imageDataUrl: string,
   displayName: string,
   description: string,
-  contract: CategoryContract,
+  contract: CategoryContract
 ): Promise<ImageGateResult> {
   return structuredResponse(
     'vision_image_gate',
@@ -159,7 +172,7 @@ export async function quickImageGate(
       imageDetail: 'low',
       maxOutputTokens: 96,
       timeoutMs: 8_000,
-    },
+    }
   );
 }
 
@@ -183,7 +196,7 @@ function fieldSummary(field: ContractField): Record<string, unknown> {
 export async function generateDashboardPagePlan(
   displayName: string,
   description: string,
-  contract: CategoryContract,
+  contract: CategoryContract
 ): Promise<DashboardPagePlan> {
   return structuredResponse(
     'vision_dashboard_page_plan',
@@ -203,7 +216,7 @@ export async function generateDashboardPagePlan(
       maxOutputTokens: 800,
       model: config.dashboardModelService,
       timeoutMs: 45_000,
-    },
+    }
   );
 }
 
