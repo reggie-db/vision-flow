@@ -44,7 +44,7 @@ from `PORTR_TOKEN` and `TUNNEL_PUBLIC_DOMAIN` in `packages/app/.env`:
 DATABRICKS_CONFIG_PROFILE=<profile> bun packages/app/scripts/local-start.ts
 ```
 
-The public tunnel is `https://vision-flow.apps.dbx.tools`. It is intentionally
+The local demo tunnel is `https://local-vision-flow.apps.dbx.tools`. It is intentionally
 unauthenticated for the internal demo and sends visitors to `/mobile`; the
 Databricks Apps URL remains protected by Databricks authentication and continues
 to open the operations workspace.
