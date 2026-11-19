@@ -283,6 +283,84 @@ export async function insertCategory(
   await addPrompt(input.id, input.prompt, true, client);
 }
 
+export async function activateSchemaVersion(
+  client: PoolClient,
+  input: {
+    categoryId: string;
+    description: string;
+    captureGuide: CaptureGuide;
+    fingerprint: string;
+    contract: CategoryContract;
+    extractionSchema: Record<string, unknown>;
+    searchText: string;
+    embedding: number[];
+    prompt: string;
+  }
+): Promise<{ changed: boolean; version: number }> {
+  const active = await client.query<{ active_schema_version: number; fingerprint: string }>(
+    `SELECT c.active_schema_version, sv.fingerprint
+       FROM ${relation('categories')} c
+       JOIN ${relation('schema_versions')} sv
+         ON sv.category_id = c.id AND sv.version = c.active_schema_version
+      WHERE c.id = $1
+      FOR UPDATE OF c`,
+    [input.categoryId]
+  );
+  const current = active.rows[0];
+  if (!current) throw new Error(`Category ${input.categoryId} could not be loaded for a schema upgrade.`);
+  if (current.fingerprint === input.fingerprint) {
+    return { changed: false, version: current.active_schema_version };
+  }
+
+  const duplicate = await client.query<{ category_id: string; version: number }>(
+    `SELECT category_id, version FROM ${relation('schema_versions')} WHERE fingerprint = $1`,
+    [input.fingerprint]
+  );
+  const existingVersion = duplicate.rows[0];
+  if (existingVersion && existingVersion.category_id !== input.categoryId) {
+    throw new Error('The upgraded schema contract is already owned by another category.');
+  }
+
+  let version = existingVersion?.version;
+  if (!version) {
+    const next = await client.query<{ version: number }>(
+      `SELECT COALESCE(MAX(version), 0) + 1 AS version
+         FROM ${relation('schema_versions')}
+        WHERE category_id = $1`,
+      [input.categoryId]
+    );
+    version = next.rows[0]?.version;
+    if (!version) throw new Error('The next schema version could not be determined.');
+    await client.query(
+      `INSERT INTO ${relation('schema_versions')}
+        (category_id, version, fingerprint, contract, extraction_schema, search_text, embedding)
+       VALUES ($1, $2, $3, $4::jsonb, $5::jsonb, $6, $7::vector)`,
+      [
+        input.categoryId,
+        version,
+        input.fingerprint,
+        JSON.stringify(input.contract),
+        JSON.stringify(input.extractionSchema),
+        input.searchText,
+        JSON.stringify(input.embedding),
+      ]
+    );
+  }
+
+  await client.query(
+    `UPDATE ${relation('categories')}
+        SET active_schema_version = $2,
+            description = $3,
+            capture_guide = $4,
+            dashboard_plan = NULL,
+            updated_at = NOW()
+      WHERE id = $1`,
+    [input.categoryId, version, input.description, input.captureGuide]
+  );
+  await addPrompt(input.categoryId, input.prompt, true, client);
+  return { changed: true, version };
+}
+
 export async function setCategoryDashboardPlan(categoryId: string, plan: DashboardPagePlan): Promise<void> {
   await database.query(
     `UPDATE ${relation('categories')} SET dashboard_plan = $2::jsonb, updated_at = NOW() WHERE id = $1`,

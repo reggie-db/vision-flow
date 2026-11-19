@@ -8,6 +8,7 @@ import { decideCategory, embedText } from './model-gateway.ts';
 import { appendOperationEvent, completeOperation, failOperation } from './operations.ts';
 import {
   addPrompt,
+  activateSchemaVersion,
   findCandidateCategories,
   findCategoryByFingerprint,
   findCategoryByPrompt,
@@ -174,6 +175,38 @@ async function provisionSpec(spec: ProvisionSpec, operationId?: string): Promise
   return finishProvisioning(categoryId, slug, operationId);
 }
 
+async function upgradeCategorySchema(category: Category, spec: ProvisionSpec): Promise<Category> {
+  const fingerprint = contractFingerprint(spec.contract);
+  if (category.schemaId === fingerprint) return category;
+
+  const searchText = contractSearchText(category.slug, spec.description, spec.contract);
+  const embedding = spec.embedding ?? (await embedText(searchText));
+  const extractionSchema = extractionJsonSchema(spec.contract);
+  let changed = false;
+  await withAdvisoryTransactionLock(database, ['vision-flow', 'category-schema', category.id], async (client) => {
+    const result = await activateSchemaVersion(client, {
+      categoryId: category.id,
+      description: spec.description.trim(),
+      captureGuide: spec.captureGuide,
+      fingerprint,
+      contract: spec.contract,
+      extractionSchema,
+      searchText,
+      embedding,
+      prompt: spec.prompt,
+    });
+    changed = result.changed;
+  });
+
+  if (changed && category.status === 'ready') {
+    await ensureVisionGenieSpace();
+    await ensureCategoryDashboard(category.id);
+  }
+  const upgraded = await getCategory(category.id);
+  if (!upgraded) throw new Error(`Upgraded category ${category.id} could not be loaded.`);
+  return upgraded;
+}
+
 export async function provisionCategoryFromPrompt(
   operationId: string,
   prompt: string,
@@ -298,8 +331,9 @@ export async function ensureDemoCategories(): Promise<Category[]> {
   let categories = await listCategories();
   for (const spec of DEMO_CATEGORY_SPECS) {
     const existing = categories.find((category) => category.slug === spec.slug);
-    if (existing?.status === 'ready') {
-      ensured.push(existing);
+    if (existing) {
+      const upgraded = await upgradeCategorySchema(existing, spec);
+      ensured.push(upgraded.status === 'ready' ? upgraded : await finishProvisioning(upgraded.id, upgraded.slug));
       continue;
     }
     ensured.push(await provisionSpec(spec));

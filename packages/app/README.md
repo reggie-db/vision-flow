@@ -4,7 +4,7 @@ AppKit scanner and continuous Lakeflow pipeline for reusable, schema-defined ima
 
 ## Architecture
 
-- **Fast image gate:** the app checks whether an image matches the selected schema and visibly contains required fields before upload.
+- **Fast image gate:** the app quickly checks whether an image matches the selected document type before upload; field extraction remains in the strong-model pipeline.
 - **Strong extraction model:** the continuous Spark pipeline uses the configured strong vision model for schema-constrained parsing.
 - **Schema registry:** Lakebase stores categories, immutable JSON schemas, PostgreSQL full-text search vectors, and pgvector embeddings.
 - **Shared database role:** the app and Spark workers connect through one password role stored in a Databricks secret. Worker processes cache one PostgreSQL pool and immutable schema lookups.

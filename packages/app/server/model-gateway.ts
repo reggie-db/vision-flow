@@ -1,7 +1,7 @@
 import { z } from 'zod';
 import { config } from './config.ts';
 import { databricksFetch } from './databricks-api.ts';
-import { extractionJsonSchema, requiredFieldNames } from './schema-contract.ts';
+import { extractionJsonSchema } from './schema-contract.ts';
 import {
   CategoryContractSchema,
   CaptureGuideSchema,
@@ -161,11 +161,11 @@ export async function quickImageGate(
     'vision_image_gate',
     ImageGateResultSchema,
     [
-      `Decide whether this image is a valid ${displayName} image: ${description}.`,
+      `Decide only whether this image depicts a ${displayName}: ${description}.`,
       `Schema intent: ${contract.documentIntent}`,
-      `Required visible fields: ${requiredFieldNames(contract).join(', ') || 'none'}`,
-      'This is only a fast base validation. Return valid=true when the image type matches and the required fields appear visible enough to parse.',
-      'Return one short failure reason, or an empty reason when valid. List missing field identifiers exactly. Do not extract values.',
+      'This is a fast document-type check, not extraction. Return valid=true when the image visibly matches the schema intent, even when individual fields are unclear, cropped, or absent.',
+      'Return valid=false only for an unrelated image or when the image is too unusable to determine its document type.',
+      'Do not extract or verify field values. Always return missingFields as an empty array. Return one short failure reason, or an empty reason when valid.',
     ].join('\n'),
     imageDataUrl,
     {
