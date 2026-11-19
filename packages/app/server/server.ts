@@ -1,3 +1,4 @@
+import { resolve } from 'node:path';
 import { files, server } from '@databricks/appkit';
 import { appkit, loadBrandContext } from '@dbx-tools/appkit';
 import { agents, genie, mastra } from '@dbx-tools/appkit-mastra';
@@ -230,6 +231,11 @@ await appkit.createApp({
           response.setHeader('Expires', '0');
         }
         next();
+      });
+
+      http.get('/mobile', (_request, response) => {
+        response.setHeader('Cache-Control', 'no-store, max-age=0');
+        response.sendFile(resolve(import.meta.dirname, '../client/dist/index.html'));
       });
 
       http.get('/api/whoami', (request, response) => {
