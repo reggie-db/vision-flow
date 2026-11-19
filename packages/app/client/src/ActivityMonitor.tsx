@@ -203,8 +203,8 @@ export function ActivityMonitor() {
         enableColumnReordering={false}
         enableColumnResizing={false}
         lazy
-        initialRowCount={30}
-        rowBatchSize={30}
+        initialRowCount={10}
+        rowBatchSize={10}
         resetScrollOnStateChange={false}
       />
     </div>
