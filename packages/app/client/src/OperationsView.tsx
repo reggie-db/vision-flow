@@ -23,7 +23,8 @@ async function responseError(response: Response, fallback: string): Promise<Erro
 function DashboardWorkspace() {
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
-  const [loaded, setLoaded] = useState(false);
+  const [frameReady, setFrameReady] = useState(false);
+  const [frameError, setFrameError] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -37,27 +38,39 @@ function DashboardWorkspace() {
       .finally(() => setLoading(false));
   }, []);
 
-  const dashboardUrl = categories[0]?.dashboardUrl;
+  const dashboard = categories[0];
 
   if (loading) return <Skeleton className="dashboard-skeleton" aria-label="Loading dashboard" />;
   if (error) return <div className="operations-error">{error}</div>;
-  if (!dashboardUrl) return <div className="operations-empty">No dashboard is configured.</div>;
+  if (!dashboard) return <div className="operations-empty">No dashboard is configured.</div>;
 
   return (
     <div className="dashboard-workspace">
       <div className="dashboard-toolbar">
-        <span>{loaded ? 'Dashboard loaded' : 'Loading dashboard…'}</span>
-        <Button variant="outline" size="sm" onClick={() => window.open(dashboardUrl, '_blank', 'noopener,noreferrer')}>
+        <span>
+          {frameError ? 'Dashboard embed unavailable' : frameReady ? 'Published AI/BI dashboard' : 'Loading dashboard…'}
+        </span>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => window.open(dashboard.dashboardOpenUrl, '_blank', 'noopener,noreferrer')}
+        >
           Open in AI/BI
         </Button>
       </div>
       <div className="dashboard-frame-wrap">
-        {!loaded ? <Skeleton className="dashboard-frame-loading" /> : null}
+        {!frameReady && !frameError ? <Skeleton className="dashboard-frame-loading" /> : null}
+        {frameError ? (
+          <div className="dashboard-frame-error operations-error" role="alert">
+            The dashboard could not be embedded. Open it in AI/BI instead.
+          </div>
+        ) : null}
         <iframe
           className="dashboard-frame"
-          src={dashboardUrl}
+          src={dashboard.dashboardEmbedUrl}
           title="Vision Flow AI/BI dashboard"
-          onLoad={() => setLoaded(true)}
+          onLoad={() => setFrameReady(true)}
+          onError={() => setFrameError(true)}
           allow="clipboard-write"
         />
       </div>

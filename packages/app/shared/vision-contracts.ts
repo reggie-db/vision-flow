@@ -54,7 +54,8 @@ export const CategorySchema = z.object({
   tableName: z.string(),
   ucTable: z.string(),
   volumeDirectory: z.string(),
-  dashboardUrl: z.string().url(),
+  dashboardOpenUrl: z.string().url(),
+  dashboardEmbedUrl: z.string().url(),
   prompts: z.array(
     z.object({
       id: z.string().uuid(),

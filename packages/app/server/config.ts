@@ -42,6 +42,7 @@ export const config = Object.freeze({
   dashboardId: optional('VISION_FLOW_DASHBOARD_ID'),
   dashboardDisplayName: optional('VISION_FLOW_DASHBOARD_DISPLAY_NAME') ?? 'Vision Flow Analytics',
   workspaceHost: workspaceHost.replace(/\/$/, ''),
+  workspaceId: optional('DATABRICKS_WORKSPACE_ID'),
   mastraGenieIdentity: z.enum(['user', 'service-principal', 'auto']).parse(required('MASTRA_GENIE_IDENTITY')),
   reviewThreshold: configUtils.positiveNumber(undefined, 'VISION_FLOW_REVIEW_THRESHOLD', 0.8, CONFIG_OPTIONS),
   pgHost: required('PGHOST'),

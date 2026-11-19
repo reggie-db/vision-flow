@@ -1,5 +1,6 @@
 import type { PoolClient } from 'pg';
 import { config } from './config.ts';
+import { resolveDashboardLinks, type DashboardLinks } from './dashboard-resource.ts';
 import { database } from './database.ts';
 import type { DashboardPagePlan } from './model-gateway.ts';
 import { normalizePrompt } from './schema-contract.ts';
@@ -54,10 +55,7 @@ function relation(table: string): string {
   return `"${config.metaSchema.replaceAll('"', '""')}"."${table}"`;
 }
 
-function mapCategory(row: CategoryRow): Category {
-  const dashboardUrl = config.dashboardId
-    ? `${config.workspaceHost}/sql/dashboardsv3/${config.dashboardId}/published`
-    : `${config.workspaceHost}/sql/dashboards`;
+function mapCategory(row: CategoryRow, links: DashboardLinks): Category {
   return {
     id: row.id,
     displayName: row.display_name,
@@ -71,7 +69,7 @@ function mapCategory(row: CategoryRow): Category {
     tableName: row.table_name,
     ucTable: row.uc_table,
     volumeDirectory: row.volume_directory,
-    dashboardUrl,
+    ...links,
     prompts: row.prompts ?? [],
   };
 }
@@ -92,18 +90,21 @@ const categorySelect = `
 `;
 
 export async function listCategories(): Promise<Category[]> {
-  const result = await database.query<CategoryRow>(
-    `${categorySelect} GROUP BY c.id, sv.fingerprint, sv.contract ORDER BY c.created_at`
-  );
-  return result.rows.map(mapCategory);
+  const [result, links] = await Promise.all([
+    database.query<CategoryRow>(`${categorySelect} GROUP BY c.id, sv.fingerprint, sv.contract ORDER BY c.created_at`),
+    resolveDashboardLinks(),
+  ]);
+  return result.rows.map((row) => mapCategory(row, links));
 }
 
 export async function getCategory(categoryId: string): Promise<Category | undefined> {
-  const result = await database.query<CategoryRow>(
-    `${categorySelect} WHERE c.id = $1 GROUP BY c.id, sv.fingerprint, sv.contract`,
-    [categoryId]
-  );
-  return result.rows[0] ? mapCategory(result.rows[0]) : undefined;
+  const [result, links] = await Promise.all([
+    database.query<CategoryRow>(`${categorySelect} WHERE c.id = $1 GROUP BY c.id, sv.fingerprint, sv.contract`, [
+      categoryId,
+    ]),
+    resolveDashboardLinks(),
+  ]);
+  return result.rows[0] ? mapCategory(result.rows[0], links) : undefined;
 }
 
 export async function findCategoryByPrompt(prompt: string): Promise<Category | undefined> {

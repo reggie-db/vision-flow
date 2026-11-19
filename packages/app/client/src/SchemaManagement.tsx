@@ -329,7 +329,7 @@ export function SchemaManagement() {
               <div className="schema-detail-actions">
                 <Button
                   variant="outline"
-                  onClick={() => window.open(selected.dashboardUrl, '_blank', 'noopener,noreferrer')}
+                  onClick={() => window.open(selected.dashboardOpenUrl, '_blank', 'noopener,noreferrer')}
                 >
                   Open dashboard
                 </Button>

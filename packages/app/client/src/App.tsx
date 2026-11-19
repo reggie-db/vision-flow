@@ -604,7 +604,7 @@ function ScannerExperience() {
               <section className="settings-actions" aria-label="Schema actions">
                 <Button
                   variant="outline"
-                  onClick={() => window.open(selectedCategory.dashboardUrl, '_blank', 'noopener,noreferrer')}
+                  onClick={() => window.open(selectedCategory.dashboardOpenUrl, '_blank', 'noopener,noreferrer')}
                 >
                   Open dashboard
                 </Button>

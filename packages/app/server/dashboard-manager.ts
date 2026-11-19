@@ -2,6 +2,7 @@ import { createHash } from 'node:crypto';
 import { withAdvisoryLock } from '@dbx-tools/postgres';
 import { z } from 'zod';
 import { config } from './config.ts';
+import { resolveDashboardId } from './dashboard-resource.ts';
 import { database } from './database.ts';
 import { DatabricksApiError, databricksJson } from './databricks-api.ts';
 import { DashboardPagePlanSchema, generateDashboardPagePlan, type DashboardPagePlan } from './model-gateway.ts';
@@ -14,17 +15,6 @@ const DashboardSchema = z.object({
   serialized_dashboard: z.string(),
   etag: z.string().optional(),
 });
-
-const DashboardListItemSchema = z.object({
-  dashboard_id: z.string(),
-  display_name: z.string(),
-  lifecycle_state: z.string().optional(),
-});
-
-const DashboardListSchema = z.union([
-  z.array(DashboardListItemSchema),
-  z.object({ dashboards: z.array(DashboardListItemSchema).default([]) }),
-]);
 
 type JsonRecord = Record<string, unknown>;
 
@@ -385,21 +375,6 @@ function serializedDashboard(categories: DashboardCategoryRecord[]): { serialize
     },
   };
   return { serialized: `${JSON.stringify(dashboard, null, 2)}\n`, queries: built.map((item) => item.sql) };
-}
-
-async function resolveDashboardId(): Promise<string> {
-  if (config.dashboardId) return config.dashboardId;
-  const payload = DashboardListSchema.parse(
-    await databricksJson('/api/2.0/lakeview/dashboards?page_size=100', {
-      signal: AbortSignal.timeout(20_000),
-    })
-  );
-  const dashboards = Array.isArray(payload) ? payload : payload.dashboards;
-  const match = dashboards.find(
-    (dashboard) => dashboard.display_name === config.dashboardDisplayName && dashboard.lifecycle_state !== 'TRASHED'
-  );
-  if (!match) throw new Error(`Dashboard ${config.dashboardDisplayName} was not provisioned by the bundle.`);
-  return match.dashboard_id;
 }
 
 async function updateDashboard(dashboardId: string, serialized: string, includeEtag = true): Promise<void> {
