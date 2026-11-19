@@ -86,22 +86,12 @@
       "type": "runtime"
     },
     {
-      "name": "@dbx-tools/email",
-      "version": "^0.9.211",
-      "type": "runtime"
-    },
-    {
       "name": "@dbx-tools/lakebase",
       "version": "^0.9.211",
       "type": "runtime"
     },
     {
       "name": "@dbx-tools/postgres",
-      "version": "^0.9.211",
-      "type": "runtime"
-    },
-    {
-      "name": "@dbx-tools/shared-auth",
       "version": "^0.9.211",
       "type": "runtime"
     },

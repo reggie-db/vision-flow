@@ -1,9 +1,7 @@
 import { files, server } from '@databricks/appkit';
 import { appkit, loadBrandContext } from '@dbx-tools/appkit';
 import { agents, genie, mastra } from '@dbx-tools/appkit-mastra';
-import { email } from '@dbx-tools/email';
 import type { TopicMessage } from '@dbx-tools/postgres';
-import { isAuthPath } from '@dbx-tools/shared-auth';
 import { log, toError } from '@dbx-tools/shared-core';
 import { authGate, isTunnelHost, tunnelInterceptor } from '@dbx-tools/tunnel';
 import { z } from 'zod';
@@ -31,7 +29,6 @@ import {
   type UploadResponse,
 } from '../shared/vision-contracts.ts';
 
-const ALLOWED_EMAIL_DOMAINS = ['@databricks.com', '@gulfinc.com'];
 const TUNNEL_ENABLED = Boolean(process.env.TUNNEL_PUBLIC_DOMAIN);
 const logger = log.logger('vision-flow');
 const UuidSchema = z.string().uuid();
@@ -113,7 +110,7 @@ function recordActivity(
 await migrateRegistry(database);
 await ensureDemoCategories();
 
-// branding/brand.json: also read by createApp, the auth gate, and email.
+// branding/brand.json: also read by createApp and Mastra.
 const brand = await loadBrandContext();
 
 await appkit.createApp({
@@ -130,10 +127,9 @@ await appkit.createApp({
     server({ bodyLimit: '11mb', staticPath: 'client/dist' }),
     ...(TUNNEL_ENABLED
       ? [
-          email(),
           authGate({
-            allow: ALLOWED_EMAIL_DOMAINS,
             gatePaths: ['/'],
+            insecure: true,
           }),
         ]
       : []),
@@ -170,12 +166,7 @@ await appkit.createApp({
           request.path !== '/health' &&
           !request.path.startsWith('/api/') &&
           !request.path.includes('.');
-        if (
-          appNavigation &&
-          isTunnelHost(request, publicDomain) &&
-          request.path !== '/mobile' &&
-          !isAuthPath(request.path)
-        ) {
+        if (appNavigation && isTunnelHost(request, publicDomain) && request.path !== '/mobile') {
           response.redirect(302, '/mobile');
           return;
         }
