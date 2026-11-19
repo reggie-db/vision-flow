@@ -595,6 +595,8 @@
   display: grid;
   grid-column: 2;
   justify-items: start;
+  width: min(100%, 484px);
+  box-sizing: border-box;
   gap: 12px;
   margin-top: 12px;
   padding: 12px;
