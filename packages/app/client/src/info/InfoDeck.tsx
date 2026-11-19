@@ -1,19 +1,23 @@
 /**
  * Vision Flow story deck: lottery receipt audit -> other documents -> two uses of AI ->
- * prompt-to-data flow -> Databricks components.
+ * prompt-created flow -> image-to-dashboard flow.
  *
  * Used by the Info tab (InfoPresentation.tsx) and bundled as a standalone page by
  * docs/research/deck/build.ts. Slides are authored at 1920x1080 and scaled to fit.
  * Colors come from the brand variables (branding/brand.json) with brand fallbacks.
  */
 import { useEffect, useLayoutEffect, useRef, useState, type KeyboardEvent, type ReactNode } from 'react';
-import { FlowDiagram } from './FlowDiagram.tsx';
+import { ImageFlowDiagram, PromptFlowDiagram } from './FlowDiagram.tsx';
 import './info-deck.css';
 
 const W = 1920;
 const H = 1080;
 
-type Slide = { id: string; title: string; render: (still: boolean) => ReactNode };
+type Slide = {
+  id: string;
+  title: string;
+  render: (still: boolean) => ReactNode;
+};
 
 function Receipt() {
   return (
@@ -189,7 +193,7 @@ export const slides: Slide[] = [
           </div>
           <dl className="vf-extracted">
             <div>
-              <dt>jurisdiction</dt>
+              <dt>state</dt>
               <dd>TX</dd>
             </div>
             <div>
@@ -197,11 +201,11 @@ export const slides: Slide[] = [
               <dd>0418-2209-7731</dd>
             </div>
             <div>
-              <dt>purchase_date</dt>
+              <dt>transaction_date</dt>
               <dd>2026-11-14</dd>
             </div>
             <div>
-              <dt>total_paid</dt>
+              <dt>total_amount</dt>
               <dd>$10.00</dd>
             </div>
           </dl>
@@ -246,19 +250,19 @@ export const slides: Slide[] = [
         <div className="vf-jobs">
           <div className="vf-job">
             <h3>Read the image</h3>
-            <p>A vision model turns each photo into a structured record with a confidence score per field.</p>
+            <p>A fast pass checks the document type. A longer pass reads the requested fields.</p>
             <pre className="vf-code">
               <span className="k">{'{'}</span>
               {'\n  '}
-              {k('jurisdiction')}: {'{ '}
+              {k('state')}: {'{ '}
               {k('value')}: {v('"TX"')},{'\n                    '}
               {k('confidence')}: {v('0.99')} {'},'}
               {'\n  '}
-              {k('purchase_date')}: {'{ '}
+              {k('transaction_date')}: {'{ '}
               {k('value')}: {v('"2026-11-14"')},{'\n                     '}
               {k('confidence')}: {v('0.95')} {'},'}
               {'\n  '}
-              {k('total_paid')}: {'{ '}
+              {k('total_amount')}: {'{ '}
               {k('value')}: {v('10.00')},{'\n                  '}
               {k('confidence')}: {v('0.98')} {'}'}
               {'\n'}
@@ -266,80 +270,60 @@ export const slides: Slide[] = [
             </pre>
           </div>
           <div className="vf-job emphasis">
-            <h3>Generate the structure</h3>
-            <p>
-              From a one-sentence description, AI generates the schema to collect, a dashboard page for that schema,
-              Genie context, and the extraction instructions the pipeline runs.
-            </p>
+            <h3>Build the flow</h3>
+            <p>A one-sentence prompt configures collection and reporting.</p>
             <ul className="vf-made">
               <li>
-                <b>Schema</b>
-                <span>fields, types, required checks</span>
-              </li>
-              <li>
-                <b>Dashboard</b>
-                <span>a page built from that schema</span>
-              </li>
-              <li>
-                <b>Genie</b>
-                <span>schema context for questions</span>
+                <b>Collection</b>
+                <span>fields and document checks</span>
               </li>
               <li>
                 <b>Extraction</b>
-                <span>instructions the pipeline runs</span>
+                <span>instructions for reading the image</span>
+              </li>
+              <li>
+                <b>Dashboard</b>
+                <span>a view of the collected data</span>
+              </li>
+              <li>
+                <b>Genie</b>
+                <span>questions over the same data</span>
               </li>
             </ul>
           </div>
         </div>
-        <p className="vf-note inline">Most of the demo covers the second use.</p>
       </>
     ),
   },
   {
-    id: 'flow',
-    title: 'From a prompt to ingested data',
+    id: 'prompt-flow',
+    title: 'A prompt creates the flow',
     render: (still) => (
       <>
-        <h2>From a prompt to ingested data</h2>
-        <ul className="vf-legend" aria-label="Legend">
-          <li className="generate">Generated once by AI</li>
-          <li className="data">Data, continuously</li>
-        </ul>
+        <h2>A prompt creates the flow</h2>
         <div
           className="vf-flow-area"
           role="img"
-          aria-label="A prompt generates a schema. The schema generates a dashboard page, Genie context, and the extraction instructions for a Lakeflow pipeline. Photos go through the pipeline into a Delta table, which the dashboard and Genie query."
+          aria-label="A prompt describes a lottery receipt. AI defines what to collect and prepares image extraction, a dashboard, and Genie questions."
         >
-          <FlowDiagram still={still} />
+          <PromptFlowDiagram still={still} />
         </div>
-        <p className="vf-note">
-          One continuous Lakeflow pipeline handles every schema. Adding a document type adds a schema; the pipeline
-          stays the same.
-        </p>
       </>
     ),
   },
   {
-    id: 'platform',
-    title: 'Databricks components',
-    render: () => (
+    id: 'image-flow',
+    title: 'Image to dashboard and Genie',
+    render: (still) => (
       <>
-        <h2>Databricks components</h2>
-        <div className="vf-stack">
-          {[
-            ['Databricks App', 'Camera capture, a quick image check, and schema management'],
-            ['Lakebase', 'Schema registry: versions, prompts, and search'],
-            ['Lakeflow pipeline', 'Continuous extraction with a vision model, per-field confidence and evidence'],
-            ['Delta table', 'One results table, each row tied to its schema fingerprint'],
-            ['AI/BI and Genie', 'Generated dashboard pages and natural-language questions over the results'],
-          ].map(([name, role]) => (
-            <div key={name} className="vf-tier">
-              <b>{name}</b>
-              <span>{role}</span>
-            </div>
-          ))}
+        <h2>Image to dashboard and Genie</h2>
+        <div
+          className="vf-flow-area"
+          role="img"
+          aria-label="A receipt image passes a quick document match, then field extraction, then appears in the dashboard and Genie."
+        >
+          <ImageFlowDiagram still={still} />
         </div>
-        <p className="vf-closing">To add a document type, describe it in a sentence and scan an example.</p>
       </>
     ),
   },
@@ -446,7 +430,6 @@ export function InfoDeck({ mode = 'interactive', initialSlide = 0, globalKeys = 
           aria-label={`Slide ${index + 1} of ${slides.length}`}
         >
           <div className="vf-scaler" style={{ transform: `scale(${scale})` }}>
-            {/* key remounts the slide so the flow animation replays each time it is shown */}
             <SlideFrame key={slide.id} slide={slide} still={still} />
           </div>
         </div>

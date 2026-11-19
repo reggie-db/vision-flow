@@ -1,6 +1,7 @@
 import { z } from 'zod';
 
 export const MAX_IMAGE_DATA_URL_LENGTH = 8_000_000;
+export const ACTIVITY_IMAGE_PREVIEW_ROUTE = '/api/activity/image-preview';
 
 export const CaptureGuideSchema = z.enum(['vertical', 'horizontal', 'none']);
 
@@ -110,6 +111,21 @@ export const OperationEventSchema = z.object({
   createdAt: z.string(),
 });
 
+export const DeviceActivityContextSchema = z.object({
+  captureSessionId: z.string().uuid(),
+  browser: z.string().min(1).max(100),
+  platform: z.string().min(1).max(100),
+  mobile: z.boolean(),
+  width: z.number().int().positive().max(20_000),
+  height: z.number().int().positive().max(20_000),
+  devicePixelRatio: z.number().positive().max(20),
+  displayMode: z.enum(['browser', 'standalone', 'fullscreen', 'minimal-ui']),
+});
+
+export const CaptureActivityContextSchema = DeviceActivityContextSchema.extend({
+  source: z.enum(['camera', 'upload']),
+});
+
 export const ImageUploadRequestSchema = z.object({
   imageDataUrl: z
     .string()
@@ -121,6 +137,7 @@ export const ImageUploadRequestSchema = z.object({
     .regex(/^data:image\/(?:jpeg|png);base64,/)
     .optional(),
   schemaVersion: z.number().int().positive().optional(),
+  captureContext: CaptureActivityContextSchema.optional(),
 });
 
 export const ImageGateResultSchema = z.object({
@@ -155,20 +172,18 @@ export const ActivityMessageSchema = z.object({
   publishedAt: z.string(),
 });
 
-export const MobileViewActivityRequestSchema = z.object({
+export const MobileViewActivityRequestSchema = DeviceActivityContextSchema.extend({
   path: z.string().min(1).max(500),
-  width: z.number().int().positive().max(20_000),
-  height: z.number().int().positive().max(20_000),
-  devicePixelRatio: z.number().positive().max(20),
-  displayMode: z.enum(['browser', 'standalone', 'fullscreen', 'minimal-ui']).optional(),
 });
 
 export type ArrayField = z.infer<typeof ArrayFieldSchema>;
 export type ActivityMessage = z.infer<typeof ActivityMessageSchema>;
 export type CaptureGuide = z.infer<typeof CaptureGuideSchema>;
+export type CaptureActivityContext = z.infer<typeof CaptureActivityContextSchema>;
 export type Category = z.infer<typeof CategorySchema>;
 export type CategoryContract = z.infer<typeof CategoryContractSchema>;
 export type ContractField = z.infer<typeof ContractFieldSchema>;
+export type DeviceActivityContext = z.infer<typeof DeviceActivityContextSchema>;
 export type ImageGateResult = z.infer<typeof ImageGateResultSchema>;
 export type OperationEvent = z.infer<typeof OperationEventSchema>;
 export type ScalarField = z.infer<typeof ScalarFieldSchema>;

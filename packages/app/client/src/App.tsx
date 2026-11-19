@@ -35,7 +35,9 @@ import {
   OperationEventSchema,
   UploadResponseSchema,
   type Category,
+  type CaptureActivityContext,
   type CaptureGuide,
+  type DeviceActivityContext,
   type ImageGateResult,
   type OperationEvent,
   type UploadResponse,
@@ -43,6 +45,55 @@ import {
 
 type ScanState = 'scanning' | 'submitting' | 'queued' | 'rejected' | 'error';
 type OperationKind = 'create' | 'rename' | 'delete';
+
+interface UserAgentData {
+  brands?: Array<{ brand: string; version: string }>;
+  mobile?: boolean;
+  platform?: string;
+}
+
+function displayMode(): DeviceActivityContext['displayMode'] {
+  return (
+    (['standalone', 'fullscreen', 'minimal-ui'] as const).find(
+      (mode) => window.matchMedia(`(display-mode: ${mode})`).matches
+    ) ?? 'browser'
+  );
+}
+
+function browserName(userAgentData: UserAgentData | undefined, userAgent: string): string {
+  const brand = userAgentData?.brands?.find((item) => !/not.?a.?brand|chromium/i.test(item.brand))?.brand;
+  if (brand) return brand;
+  if (/EdgiOS|EdgA|Edg\//i.test(userAgent)) return 'Microsoft Edge';
+  if (/CriOS|Chrome\//i.test(userAgent)) return 'Google Chrome';
+  if (/FxiOS|Firefox\//i.test(userAgent)) return 'Mozilla Firefox';
+  if (/Safari\//i.test(userAgent)) return 'Safari';
+  return 'Web browser';
+}
+
+function platformName(userAgentData: UserAgentData | undefined, userAgent: string): string {
+  if (/iPhone|iPad|iPod/i.test(userAgent)) return 'iOS';
+  if (/Macintosh/i.test(userAgent) && navigator.maxTouchPoints > 1) return 'iPadOS';
+  if (/Android/i.test(userAgent)) return 'Android';
+  if (/Windows/i.test(userAgent)) return 'Windows';
+  if (/Macintosh|Mac OS X/i.test(userAgent)) return 'macOS';
+  if (/Linux/i.test(userAgent)) return 'Linux';
+  return userAgentData?.platform?.trim() || navigator.platform || 'Unknown platform';
+}
+
+function deviceActivityContext(captureSessionId: string): DeviceActivityContext {
+  const userAgent = navigator.userAgent;
+  const userAgentData = (navigator as Navigator & { userAgentData?: UserAgentData }).userAgentData;
+  return {
+    captureSessionId,
+    browser: browserName(userAgentData, userAgent),
+    platform: platformName(userAgentData, userAgent),
+    mobile: userAgentData?.mobile ?? /Android|iPhone|iPad|iPod|Mobile/i.test(userAgent),
+    width: window.innerWidth,
+    height: window.innerHeight,
+    devicePixelRatio: window.devicePixelRatio,
+    displayMode: displayMode(),
+  };
+}
 
 function isActualDevice(): boolean {
   const touchFirst = window.matchMedia('(pointer: coarse)').matches && navigator.maxTouchPoints > 0;
@@ -70,12 +121,18 @@ async function fetchCategories(): Promise<Category[]> {
 async function uploadImage(
   category: Category,
   imageDataUrl: string,
-  quickImageDataUrl: string
+  quickImageDataUrl: string,
+  captureContext: CaptureActivityContext
 ): Promise<UploadResponse> {
   const response = await fetch(`/api/categories/${category.id}/uploads`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ imageDataUrl, quickImageDataUrl, schemaVersion: category.activeSchemaVersion }),
+    body: JSON.stringify({
+      imageDataUrl,
+      quickImageDataUrl,
+      schemaVersion: category.activeSchemaVersion,
+      captureContext,
+    }),
   });
   if (!response.ok) throw await responseError(response, 'The image could not be checked and queued.');
   return UploadResponseSchema.parse(await response.json());
@@ -128,37 +185,32 @@ export default function App() {
 function MobileView() {
   const actualDevice = isActualDevice();
   const openReported = useRef(false);
+  const captureSessionId = useRef(crypto.randomUUID()).current;
 
   useEffect(() => {
     if (openReported.current) return;
     openReported.current = true;
-    const displayMode = (['standalone', 'fullscreen', 'minimal-ui'] as const).find(
-      (mode) => window.matchMedia(`(display-mode: ${mode})`).matches
-    );
     void fetch('/api/activity/mobile-open', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       keepalive: true,
       body: JSON.stringify({
+        ...deviceActivityContext(captureSessionId),
         path: window.location.pathname,
-        width: window.innerWidth,
-        height: window.innerHeight,
-        devicePixelRatio: window.devicePixelRatio,
-        displayMode: displayMode ?? 'browser',
       }),
     }).catch(() => undefined);
-  }, []);
+  }, [captureSessionId]);
 
   return (
     <main className={actualDevice ? 'device-stage' : 'desktop-stage'}>
       <section className={actualDevice ? 'device-shell' : 'tablet-shell'}>
-        <ScannerExperience />
+        <ScannerExperience captureSessionId={captureSessionId} />
       </section>
     </main>
   );
 }
 
-function ScannerExperience() {
+function ScannerExperience({ captureSessionId }: { captureSessionId: string }) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const imageInputRef = useRef<HTMLInputElement>(null);
   const [portalContainer, setPortalContainer] = useState<HTMLElement | null>(null);
@@ -215,13 +267,16 @@ function ScannerExperience() {
     setScanState('scanning');
   };
 
-  const submitImage = async (imageDataUrl: string) => {
+  const submitImage = async (imageDataUrl: string, source: CaptureActivityContext['source']) => {
     if (!selectedCategory) return;
     setErrorMessage(null);
     setGate(null);
     setScanState('submitting');
     try {
-      const result = await uploadImage(selectedCategory, imageDataUrl, await quickPreview(imageDataUrl));
+      const result = await uploadImage(selectedCategory, imageDataUrl, await quickPreview(imageDataUrl), {
+        ...deviceActivityContext(captureSessionId),
+        source,
+      });
       setGate(result.gate);
       setScanState(result.status === 'queued' ? 'queued' : 'rejected');
     } catch (error) {
@@ -232,7 +287,7 @@ function ScannerExperience() {
 
   const capture = async () => {
     try {
-      await submitImage(await captureImage());
+      await submitImage(await captureImage(), 'camera');
     } catch (error) {
       setErrorMessage(error instanceof Error ? error.message : 'The camera image could not be captured.');
       setScanState('error');
@@ -244,7 +299,7 @@ function ScannerExperience() {
     event.target.value = '';
     if (!file) return;
     try {
-      await submitImage(await readImage(file));
+      await submitImage(await readImage(file), 'upload');
     } catch (error) {
       setErrorMessage(error instanceof Error ? error.message : 'The image could not be uploaded.');
       setScanState('error');

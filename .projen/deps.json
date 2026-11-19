@@ -2,7 +2,7 @@
   "dependencies": [
     {
       "name": "@dbx-tools/projen",
-      "version": "^0.9.211",
+      "version": "^0.9.212",
       "type": "build"
     },
     {

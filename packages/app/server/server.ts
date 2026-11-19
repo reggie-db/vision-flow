@@ -3,7 +3,7 @@ import { appkit, loadBrandContext } from '@dbx-tools/appkit';
 import { agents, genie, mastra } from '@dbx-tools/appkit-mastra';
 import type { TopicMessage } from '@dbx-tools/postgres';
 import { log, toError } from '@dbx-tools/shared-core';
-import { authGate, isTunnelHost, tunnelInterceptor } from '@dbx-tools/tunnel';
+import { authGate, clientIp, isTunnelHost, tunnelInterceptor } from '@dbx-tools/tunnel';
 import { z } from 'zod';
 import { ACTIVITY_TOPIC, activityBus, publishActivity } from './activity.ts';
 import {
@@ -19,19 +19,27 @@ import { quickImageGate } from './model-gateway.ts';
 import { createOperation, listOperationEvents, subscribeOperation } from './operations.ts';
 import { deletePrompt, getCategory, getSchemaVersion, listCategories, setCategoryCaptureGuide } from './registry.ts';
 import {
+  ACTIVITY_IMAGE_PREVIEW_ROUTE,
   MobileViewActivityRequestSchema,
   CategoryDeleteRequestSchema,
   CategoryRenameRequestSchema,
   CategoryResolveRequestSchema,
   CaptureGuideRequestSchema,
   ImageUploadRequestSchema,
+  type CaptureActivityContext,
+  type DeviceActivityContext,
   type OperationEvent,
   type UploadResponse,
 } from '../shared/vision-contracts.ts';
 
 const TUNNEL_ENABLED = Boolean(process.env.TUNNEL_PUBLIC_DOMAIN);
+const SOURCE_IMAGE_VOLUME_KEY = 'files';
 const logger = log.logger('vision-flow');
 const UuidSchema = z.string().uuid();
+const StoredImagePathSchema = z
+  .string()
+  .max(500)
+  .regex(/^[a-z][a-z0-9_]{2,47}\/v[1-9][0-9]*\/[0-9]{4}\/[0-9]{2}\/[0-9]{2}\/[0-9a-f-]{36}\.(?:jpg|png)$/);
 const mastraPostgres = {
   host: config.pgHost,
   port: config.pgPort,
@@ -98,11 +106,51 @@ function sendActivitySse(response: { write(chunk: string): boolean }, event: Top
   response.write(`id: ${event.id}\nevent: activity\ndata: ${JSON.stringify(event)}\n\n`);
 }
 
+type ActivityMetadata = Record<string, string | number | boolean | null>;
+
+function maskedClientIp(request: Parameters<typeof clientIp>[0]): string | undefined {
+  if (isTunnelHost(request, process.env.TUNNEL_PUBLIC_DOMAIN)) return undefined;
+  const value = clientIp(request).replace(/^::ffff:/, '');
+  if (value === 'unknown') return undefined;
+  if (value === '::1' || value.startsWith('127.')) return 'Local';
+  if (/^(?:[0-9]{1,3}\.){3}[0-9]{1,3}$/.test(value)) {
+    return `${value.split('.').slice(0, 3).join('.')}.xxx`;
+  }
+  if (value.includes(':')) {
+    const prefix = value.split(':').filter(Boolean).slice(0, 4).join(':');
+    return prefix ? `${prefix}::` : undefined;
+  }
+  return undefined;
+}
+
+function activityMetadata(
+  request: Parameters<typeof clientIp>[0],
+  context?: DeviceActivityContext | CaptureActivityContext
+): ActivityMetadata {
+  const metadata: ActivityMetadata = {};
+  const ip = maskedClientIp(request);
+  const userAgent = request.headers['user-agent'];
+  if (ip) metadata.clientIp = ip;
+  if (typeof userAgent === 'string') metadata.userAgent = userAgent.slice(0, 500);
+  if (!context) return metadata;
+  metadata.captureSessionId = context.captureSessionId;
+  metadata.browser = context.browser;
+  metadata.platform = context.platform;
+  metadata.mobile = context.mobile;
+  metadata.viewportWidth = context.width;
+  metadata.viewportHeight = context.height;
+  metadata.devicePixelRatio = context.devicePixelRatio;
+  metadata.displayMode = context.displayMode;
+  if ('source' in context) metadata.captureSource = context.source;
+  return metadata;
+}
+
 function recordActivity(
   type: string,
-  body: { summary: string; [key: string]: string | number | boolean | null }
+  body: { summary: string; [key: string]: string | number | boolean | null },
+  metadata: ActivityMetadata = {}
 ): void {
-  void publishActivity(type, body).catch((error) => {
+  void publishActivity(type, body, metadata).catch((error) => {
     logger.error('activity publish failed', { error: toError(error), type });
   });
 }
@@ -135,9 +183,11 @@ await appkit.createApp({
       : []),
     files({
       volumes: {
-        files: {
+        [SOURCE_IMAGE_VOLUME_KEY]: {
+          auth: 'on-behalf-of-user',
           maxUploadSize: 6_000_000,
-          policy: files.policy.allowAll(),
+          policy: (action, _resource, user) =>
+            user.isServicePrincipal === true && (action === 'upload' || action === 'download'),
         },
       },
     }),
@@ -197,11 +247,43 @@ await appkit.createApp({
           response.status(400).json({ error: 'Valid mobile viewport details are required.' });
           return;
         }
-        const event = await publishActivity('mobile.view.opened', {
-          summary: 'Mobile capture view opened',
-          ...parsed.data,
-        });
+        const event = await publishActivity(
+          'mobile.view.opened',
+          {
+            summary: 'Mobile capture view opened',
+            path: parsed.data.path,
+          },
+          activityMetadata(request, parsed.data)
+        );
         response.status(202).json({ event });
+      });
+
+      http.get(ACTIVITY_IMAGE_PREVIEW_ROUTE, async (request, response) => {
+        if (isTunnelHost(request, process.env.TUNNEL_PUBLIC_DOMAIN)) {
+          response.status(403).json({ error: 'Image previews are available from the operations workspace.' });
+          return;
+        }
+        const path = StoredImagePathSchema.safeParse(request.query.path);
+        if (!path.success) {
+          response.status(400).json({ error: 'A valid stored image path is required.' });
+          return;
+        }
+        try {
+          const download = await app.files(SOURCE_IMAGE_VOLUME_KEY).download(path.data);
+          if (!download.contents) {
+            response.status(404).json({ error: 'The captured image is unavailable.' });
+            return;
+          }
+          const contents = Buffer.from(await new Response(download.contents).arrayBuffer());
+          response.setHeader('Cache-Control', 'private, max-age=60');
+          response.setHeader('Content-Type', path.data.endsWith('.png') ? 'image/png' : 'image/jpeg');
+          response.setHeader('Content-Length', String(contents.length));
+          response.setHeader('X-Content-Type-Options', 'nosniff');
+          response.send(contents);
+        } catch (error) {
+          logger.warn('activity image preview failed', { error: toError(error), path: path.data });
+          response.status(404).json({ error: 'The captured image is unavailable.' });
+        }
       });
 
       http.get('/api/activity/events', async (request, response) => {
@@ -436,12 +518,16 @@ await appkit.createApp({
           );
           if (!gate.valid) {
             const result: UploadResponse = { status: 'rejected', gate };
-            recordActivity('image.rejected', {
-              summary: `Image rejected for ${category.displayName}`,
-              categoryId: category.id,
-              categoryName: category.displayName,
-              reason: gate.reason,
-            });
+            recordActivity(
+              'image.rejected',
+              {
+                summary: `Image rejected for ${category.displayName}`,
+                categoryId: category.id,
+                categoryName: category.displayName,
+                reason: gate.reason,
+              },
+              activityMetadata(request, parsed.data.captureContext)
+            );
             response.json(result);
             return;
           }
@@ -449,22 +535,30 @@ await appkit.createApp({
           const image = decodeImageDataUrl(parsed.data.imageDataUrl);
           const uploadId = crypto.randomUUID();
           const storedPath = uploadPath(category.slug, schemaVersion, uploadId, image.extension);
-          await app.files('files').upload(storedPath, image.contents, { overwrite: false });
+          await app.files(SOURCE_IMAGE_VOLUME_KEY).upload(storedPath, image.contents, { overwrite: false });
           const result: UploadResponse = { status: 'queued', uploadId, storedPath, gate };
-          recordActivity('image.queued', {
-            summary: `Image queued for ${category.displayName}`,
-            categoryId: category.id,
-            categoryName: category.displayName,
-            uploadId,
-            storedPath,
-          });
+          recordActivity(
+            'image.queued',
+            {
+              summary: `Image queued for ${category.displayName}`,
+              categoryId: category.id,
+              categoryName: category.displayName,
+              uploadId,
+              storedPath,
+            },
+            activityMetadata(request, parsed.data.captureContext)
+          );
           response.status(202).json(result);
         } catch (error) {
           logger.error('image validation failed', { error: toError(error) });
-          recordActivity('image.failed', {
-            summary: 'Image validation or queueing failed',
-            categoryId: categoryId.data,
-          });
+          recordActivity(
+            'image.failed',
+            {
+              summary: 'Image validation or queueing failed',
+              categoryId: categoryId.data,
+            },
+            activityMetadata(request, parsed.success ? parsed.data.captureContext : undefined)
+          );
           response.status(502).json({ error: 'The image could not be checked and queued. Try again.' });
         }
       });

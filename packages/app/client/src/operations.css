@@ -523,11 +523,16 @@
 }
 
 .activity-list li {
-  display: flex;
+  display: grid;
+  grid-template-columns: 10px minmax(0, 1fr);
   align-items: flex-start;
-  gap: 12px;
+  column-gap: 12px;
   padding: 13px 4px;
   border-bottom: 1px solid var(--brand-color-border);
+}
+
+.activity-list li.expanded {
+  padding-bottom: 16px;
 }
 
 .activity-event-icon {
@@ -549,19 +554,84 @@
 .activity-event-main {
   display: grid;
   min-width: 0;
-  flex: 1;
   gap: 5px;
 }
 
-.activity-event-main > div {
+.activity-event-heading,
+.activity-event-actions {
   display: flex;
   align-items: center;
+  gap: 8px;
+}
+
+.activity-event-heading {
   justify-content: space-between;
-  gap: 12px;
+  min-width: 0;
+  gap: 16px;
+}
+
+.activity-event-heading strong {
+  min-width: 0;
+}
+
+.activity-event-actions {
+  flex: none;
+}
+
+.activity-event-actions button {
+  min-height: 28px;
+  padding: 2px 8px;
 }
 
 .activity-event-main small {
   color: var(--brand-color-muted);
+}
+
+.activity-device-summary {
+  overflow-wrap: anywhere;
+}
+
+.activity-event-details {
+  display: grid;
+  grid-column: 2;
+  justify-items: start;
+  gap: 12px;
+  margin-top: 12px;
+  padding: 12px;
+  border: 1px solid var(--brand-color-border);
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--brand-color-surface) 70%, var(--background));
+}
+
+.activity-preview-image {
+  display: block;
+  width: auto;
+  max-width: min(100%, 460px);
+  max-height: 320px;
+  border-radius: 6px;
+  object-fit: contain;
+  background: var(--background);
+}
+
+.activity-preview-error {
+  color: var(--brand-color-muted);
+  font-size: 13px;
+}
+
+.activity-rejection-reason {
+  display: grid;
+  gap: 4px;
+}
+
+.activity-rejection-reason span {
+  color: var(--brand-color-muted);
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.activity-rejection-reason p {
+  margin: 0;
 }
 
 .info-deck {
@@ -874,9 +944,18 @@
   }
 
   .activity-toolbar,
-  .activity-event-main > div {
+  .activity-event-heading {
     align-items: flex-start;
     flex-direction: column;
+  }
+
+  .activity-event-actions {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .activity-event-details {
+    justify-items: stretch;
   }
 
   .info-deck {

@@ -67,57 +67,57 @@
     },
     {
       "name": "@dbx-tools/appkit-mastra",
-      "version": "^0.9.211",
+      "version": "^0.9.212",
       "type": "runtime"
     },
     {
       "name": "@dbx-tools/appkit",
-      "version": "^0.9.211",
+      "version": "^0.9.212",
       "type": "runtime"
     },
     {
       "name": "@dbx-tools/auth",
-      "version": "^0.9.211",
+      "version": "^0.9.212",
       "type": "runtime"
     },
     {
       "name": "@dbx-tools/core",
-      "version": "^0.9.211",
+      "version": "^0.9.212",
       "type": "runtime"
     },
     {
       "name": "@dbx-tools/lakebase",
-      "version": "^0.9.211",
+      "version": "^0.9.212",
       "type": "runtime"
     },
     {
       "name": "@dbx-tools/postgres",
-      "version": "^0.9.211",
+      "version": "^0.9.212",
       "type": "runtime"
     },
     {
       "name": "@dbx-tools/shared-core",
-      "version": "^0.9.211",
+      "version": "^0.9.212",
       "type": "runtime"
     },
     {
       "name": "@dbx-tools/shared-mastra",
-      "version": "^0.9.211",
+      "version": "^0.9.212",
       "type": "runtime"
     },
     {
       "name": "@dbx-tools/tunnel",
-      "version": "^0.9.211",
+      "version": "^0.9.212",
       "type": "runtime"
     },
     {
       "name": "@dbx-tools/ui-mastra",
-      "version": "^0.9.211",
+      "version": "^0.9.212",
       "type": "runtime"
     },
     {
       "name": "@dbx-tools/ui",
-      "version": "^0.9.211",
+      "version": "^0.9.212",
       "type": "runtime"
     },
     {
@@ -153,6 +153,11 @@
     {
       "name": "bun",
       "version": "1.4.2",
+      "type": "runtime"
+    },
+    {
+      "name": "motion",
+      "version": "14.14.0",
       "type": "runtime"
     },
     {

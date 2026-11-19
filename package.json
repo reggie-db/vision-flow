@@ -39,7 +39,7 @@
     "postinstall": "bun node_modules/@dbx-tools/projen/tasks/bun-lockfile.ts"
   },
   "devDependencies": {
-    "@dbx-tools/projen": "^0.9.211",
+    "@dbx-tools/projen": "^0.9.212",
     "@types/bun": "1.4.2",
     "@types/node": "^24.6.0",
     "@typescript-eslint/eslint-plugin": "^8",

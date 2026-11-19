@@ -4,7 +4,7 @@
  * fallbacks for the standalone docs build.
  */
 .vf-deck {
-  --lava: var(--brand-color-primary, #ff3621);
+  --lava: var(--brand-color-accent, #ff3621);
   --navy: var(--brand-color-foreground, #1b3139);
   --slate: var(--brand-color-muted, #5a6f77);
   --oat: var(--brand-color-surface, #f9f7f4);
@@ -315,324 +315,122 @@
   color: var(--on-navy);
 }
 
-/* Flow */
-.vf-legend {
-  position: absolute;
-  top: 140px;
-  right: var(--pad);
-  margin: 0;
-  padding: 0;
-  list-style: none;
-  display: flex;
-  gap: 32px;
-  font-size: 22px;
-  color: var(--slate);
-}
-.vf-legend li {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-.vf-legend li::before {
-  content: '';
-  width: 40px;
-  height: 4px;
-  border-radius: 2px;
-  background: var(--navy);
-}
-.vf-legend li.data::before {
-  background: var(--lava);
-}
+/* Flow slides */
 .vf-flow-area {
   position: absolute;
   left: var(--pad);
   right: var(--pad);
-  top: 236px;
+  top: 225px;
   height: 700px;
 }
-.vf-flow,
-.vf-flow .react-flow {
+.vf-flow-area .react-flow {
   width: 100%;
   height: 100%;
-}
-.vf-flow .react-flow {
   --xy-background-color: transparent;
+  --xy-edge-stroke: var(--navy);
+  --xy-edge-stroke-width: 4;
   font-family: inherit;
 }
-.vf-flow .react-flow__handle {
+.vf-flow-area .react-flow__node {
+  cursor: default;
+}
+.vf-flow-area .react-flow__handle {
+  width: 1px;
+  height: 1px;
+  min-width: 0;
+  min-height: 0;
+  border: 0;
   opacity: 0;
   pointer-events: none;
 }
-.vf-flow .react-flow__node {
-  cursor: default;
+.vf-flow-area .react-flow__edge-path {
+  stroke: var(--navy);
+  stroke-width: 4;
+  stroke-linecap: round;
 }
-
-.vf-card {
-  width: 340px;
+.vf-flow-area .react-flow__edge.accent .react-flow__edge-path {
+  stroke: var(--lava);
+}
+.vf-flow-area .react-flow__edge.animated .react-flow__edge-path {
+  stroke-dasharray: 10 8;
+}
+.vf-flow-node {
+  min-height: 238px;
+  padding: 30px 30px 32px;
+  border: 2px solid var(--line);
+  border-top: 7px solid var(--navy);
   border-radius: 16px;
   background: #fff;
-  border: 2px solid var(--line);
   color: var(--navy);
+  box-shadow: 0 18px 40px rgb(27 49 57 / 8%);
 }
-.react-flow__node[data-id='prompt'] .vf-card,
-.react-flow__node[data-id='schema'] .vf-card,
-.react-flow__node[data-id='dashboard'] .vf-card,
-.react-flow__node[data-id='genie'] .vf-card {
-  height: 272px;
-}
-.react-flow__node[data-id='photos'] .vf-card,
-.react-flow__node[data-id='pipeline'] .vf-card,
-.react-flow__node[data-id='delta'] .vf-card {
-  height: 196px;
-}
-.vf-card.dark {
-  background: var(--navy);
+.vf-flow-node.dark {
   border-color: var(--navy);
+  border-top-color: var(--lava);
+  background: var(--navy);
   color: #fff;
 }
-.vf-card-head {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 12px;
-  padding: 20px 22px 0;
+.vf-flow-node.accent {
+  border-top-color: var(--lava);
 }
-.vf-card-head b {
-  font-size: 28px;
-  font-weight: 700;
+.vf-flow-node-label {
+  display: block;
+  margin-bottom: 18px;
+  color: var(--lava);
+  font: 600 19px/1 var(--brand-font-mono, 'DM Mono', monospace);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
 }
-.vf-card-head span {
-  font-size: 18px;
+.vf-flow-node h3 {
+  margin: 0;
+  font-size: 35px;
+  line-height: 1.08;
+}
+.vf-flow-node-body {
+  margin-top: 22px;
   color: var(--slate);
-  font-family: var(--brand-font-mono, 'DM Mono', monospace);
+  font-size: 23px;
+  line-height: 1.38;
 }
-.vf-card-body {
-  padding: 14px 22px 20px;
-}
-.vf-card-body p {
-  font-size: 21px;
-  line-height: 1.4;
-}
-.vf-card.dark .vf-card-body p {
+.vf-flow-node.dark .vf-flow-node-body {
   color: var(--on-navy);
 }
-.vf-fields {
+.vf-flow-node-body p {
   margin: 0;
-  padding: 0;
-  list-style: none;
-  display: grid;
-  gap: 6px;
 }
-.vf-fields li {
-  display: flex;
-  justify-content: space-between;
-  gap: 12px;
-  padding-bottom: 6px;
-  border-bottom: 1px solid var(--oat-2);
-  font-size: 19px;
-}
-.vf-fields code {
-  font-size: 19px;
-}
-.vf-fields i {
-  font-style: normal;
-  color: var(--slate);
-  font-family: var(--brand-font-mono, 'DM Mono', monospace);
-}
-.vf-kpis {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 12px;
-}
-.vf-kpis div {
-  padding: 14px;
-  border-radius: 10px;
-  background: var(--oat);
-  display: grid;
-}
-.vf-kpis b {
-  font-size: 34px;
-  font-variant-numeric: tabular-nums;
-}
-.vf-kpis span {
-  font-size: 18px;
-  color: var(--slate);
-}
-.vf-chat {
+.vf-flow-field-list {
   display: grid;
   gap: 10px;
 }
-.vf-chat p {
-  padding: 10px 14px;
-  border-radius: 12px;
-  font-size: 19px !important;
-  line-height: 1.35;
+.vf-flow-field-list span {
+  padding-bottom: 8px;
+  border-bottom: 1px solid rgb(255 255 255 / 18%);
 }
-.vf-chat .q {
-  justify-self: end;
-  max-width: 92%;
-  background: var(--navy);
-  color: #fff;
-}
-.vf-chat .a {
-  max-width: 96%;
+.vf-flow-receipt {
+  width: 132px;
+  margin: 0 auto;
+  padding: 18px 16px 20px;
   background: var(--oat);
-}
-.vf-thumbs {
-  display: flex;
-  gap: 12px;
-}
-.vf-thumbs span {
-  position: relative;
-  width: 52px;
-  height: 70px;
-  border-radius: 6px;
-  background: var(--oat);
-  border: 2px solid var(--line);
-}
-.vf-thumbs span::after {
-  content: '';
-  position: absolute;
-  left: 9px;
-  right: 9px;
-  top: 12px;
-  height: 6px;
-  border-radius: 3px;
-  background: var(--navy);
-  opacity: 0.5;
-  box-shadow:
-    0 13px 0 var(--navy),
-    0 26px 0 var(--navy);
-}
-.vf-row {
-  margin: 0;
-  display: grid;
-}
-.vf-row div {
-  display: flex;
-  justify-content: space-between;
-  padding: 8px 0;
-  border-bottom: 1px solid var(--oat-2);
-  font-size: 19px;
-}
-.vf-row dt {
-  color: var(--slate);
-}
-.vf-row dd {
-  margin: 0;
-  font-family: var(--brand-font-mono, 'DM Mono', monospace);
-}
-.vf-row i {
-  font-style: normal;
-  color: var(--ok);
-  margin-left: 6px;
-}
-
-.vf-flow .react-flow__edge-path.vf-edge {
-  fill: none;
-  stroke-linecap: round;
-}
-.vf-flow .react-flow__edge-path.vf-edge.generate {
-  stroke: var(--navy);
-  stroke-width: 3;
-}
-.vf-flow .react-flow__edge-path.vf-edge.data {
-  stroke: var(--lava);
-  stroke-width: 4;
-}
-.vf-edge-label {
-  position: absolute;
-  padding: 2px 4px;
-  font-size: 19px;
-  font-weight: 600;
   color: var(--navy);
-  white-space: nowrap;
-  pointer-events: none;
+  box-shadow: 0 10px 24px rgb(27 49 57 / 14%);
+  text-align: center;
 }
-.vf-edge-label.data {
-  color: #c22c18;
+.vf-flow-receipt strong {
+  display: block;
+  margin-bottom: 15px;
+  font: 700 18px/1 var(--brand-font-mono, 'DM Mono', monospace);
 }
-.vf-packet {
-  fill: var(--lava);
-  stroke: #fff;
-  stroke-width: 3;
-  offset-rotate: 0deg;
-  offset-distance: 0%;
-  opacity: 0;
-  animation-name: vf-packet;
-  animation-timing-function: linear;
-  animation-iteration-count: infinite;
+.vf-flow-receipt i {
+  display: block;
+  height: 4px;
+  margin: 9px 0;
+  border-radius: 2px;
+  background: var(--line);
 }
-
-/* One orchestrated reveal: each generated card appears when its incoming edge finishes drawing. */
-.vf-flow:not(.still) .vf-card.appears {
-  opacity: 0;
-  animation: vf-appear 0.45s ease-out var(--delay) forwards;
-}
-.vf-flow:not(.still) .react-flow__edge-path.vf-edge {
-  stroke-dasharray: 1;
-  stroke-dashoffset: 1;
-  animation: vf-draw 0.7s ease-in-out var(--delay) forwards;
-}
-.vf-flow:not(.still) .vf-edge-label {
-  opacity: 0;
-  animation: vf-appear 0.3s ease-out calc(var(--delay) + 0.4s) forwards;
-}
-@keyframes vf-appear {
-  to {
-    opacity: 1;
-  }
-}
-@keyframes vf-draw {
-  to {
-    stroke-dashoffset: 0;
-  }
-}
-@keyframes vf-packet {
-  0% {
-    offset-distance: 0%;
-    opacity: 0;
-  }
-  8% {
-    opacity: 1;
-  }
-  92% {
-    opacity: 1;
-  }
-  100% {
-    offset-distance: 100%;
-    opacity: 0;
-  }
-}
-
-/* Components */
-.vf-stack {
-  margin-top: 64px;
-  display: grid;
-  gap: 14px;
-}
-.vf-tier {
-  display: grid;
-  grid-template-columns: 420px 1fr;
-  align-items: baseline;
-  padding: 26px 40px;
-  border-radius: 12px;
-  background: #fff;
-  border: 2px solid var(--line);
-}
-.vf-tier b {
-  font-size: 34px;
-}
-.vf-tier span {
-  font-size: 28px;
-  color: var(--slate);
-}
-.vf-closing {
-  position: absolute;
-  left: var(--pad);
-  bottom: 84px;
-  font-size: 40px;
-  font-weight: 600;
+.vf-flow-receipt b {
+  display: block;
+  margin-top: 16px;
+  font-size: 21px;
 }
 
 /* Controls */
@@ -699,10 +497,4 @@
 }
 .vf-deck.print .vf-slide {
   break-after: page;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .vf-packet {
-    display: none;
-  }
 }

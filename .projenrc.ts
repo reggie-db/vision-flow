@@ -2,7 +2,7 @@ import { project, projectJs } from "@dbx-tools/projen";
 import { readFileSync } from "node:fs";
 import { javascript, YamlFile } from "projen";
 
-const dbxToolsVersion = "^0.9.211";
+const dbxToolsVersion = "^0.9.212";
 
 interface BundleVariable {
   readonly default?: unknown;
@@ -42,6 +42,7 @@ const rootProject = new projectJs.DBXToolsNodeProject({
   appBundle: false,
   releaseMode: "disabled",
 });
+rootProject.addDevDeps(`@dbx-tools/projen@${dbxToolsVersion}`);
 
 rootProject.pnpmWorkspace.addCatalog("tw-animate-css", "1.4.0");
 
@@ -119,6 +120,7 @@ project.applyToProjects(rootProject, { path: "packages/app" }, (app) => {
     "@fontsource/dm-mono@^5.3.0",
     "@mlflow/core@0.4.0",
     "@xyflow/react@12.10.0",
+    "motion@14.14.0",
     "pg@^8.22.0",
     "react@~19.2.4",
     "react-dom@~19.2.4",

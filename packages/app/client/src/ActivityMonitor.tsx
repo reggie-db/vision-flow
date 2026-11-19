@@ -1,6 +1,10 @@
 import { Badge, Button, Skeleton } from '@databricks/appkit-ui/react';
 import { useEffect, useMemo, useState } from 'react';
-import { ActivityMessageSchema, type ActivityMessage } from '../../shared/vision-contracts.ts';
+import {
+  ACTIVITY_IMAGE_PREVIEW_ROUTE,
+  ActivityMessageSchema,
+  type ActivityMessage,
+} from '../../shared/vision-contracts.ts';
 
 type ConnectionState = 'connecting' | 'live' | 'reconnecting';
 
@@ -16,10 +20,50 @@ function sender(event: ActivityMessage): string {
   return typeof value === 'string' ? value : 'Application';
 }
 
+function stringValue(record: Record<string, unknown>, key: string): string | undefined {
+  const value = record[key];
+  return typeof value === 'string' && value.length > 0 ? value : undefined;
+}
+
+function numberValue(record: Record<string, unknown>, key: string): number | undefined {
+  const value = record[key];
+  return typeof value === 'number' && Number.isFinite(value) ? value : undefined;
+}
+
+function deviceSummary(event: ActivityMessage): string | undefined {
+  const browser = stringValue(event.metadata, 'browser');
+  const platform = stringValue(event.metadata, 'platform');
+  const source = stringValue(event.metadata, 'captureSource');
+  const width = numberValue(event.metadata, 'viewportWidth');
+  const height = numberValue(event.metadata, 'viewportHeight');
+  const pixelRatio = numberValue(event.metadata, 'devicePixelRatio');
+  const ip = stringValue(event.metadata, 'clientIp');
+  const parts = [browser, platform];
+  if (source) parts.push(source === 'camera' ? 'Camera' : 'Uploaded image');
+  if (width && height) parts.push(`${width}×${height}${pixelRatio ? ` @${pixelRatio}x` : ''}`);
+  if (ip) parts.push(ip);
+  return parts.filter(Boolean).join(' · ') || undefined;
+}
+
+function ActivityImage({ path, alt }: { path: string; alt: string }) {
+  const [failed, setFailed] = useState(false);
+  if (failed) return <div className="activity-preview-error">Preview unavailable.</div>;
+  const query = new URLSearchParams({ path });
+  return (
+    <img
+      className="activity-preview-image"
+      src={`${ACTIVITY_IMAGE_PREVIEW_ROUTE}?${query}`}
+      alt={alt}
+      onError={() => setFailed(true)}
+    />
+  );
+}
+
 export function ActivityMonitor() {
   const [events, setEvents] = useState<ActivityMessage[]>([]);
   const [connection, setConnection] = useState<ConnectionState>('connecting');
   const [error, setError] = useState<string | null>(null);
+  const [expandedEventId, setExpandedEventId] = useState<string | null>(null);
 
   useEffect(() => {
     const stream = new EventSource('/api/activity/events');
@@ -63,7 +107,15 @@ export function ActivityMonitor() {
           <Badge variant="secondary">
             {imageEvents} image {imageEvents === 1 ? 'event' : 'events'}
           </Badge>
-          <Button variant="outline" size="sm" onClick={() => setEvents([])} disabled={events.length === 0}>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => {
+              setEvents([]);
+              setExpandedEventId(null);
+            }}
+            disabled={events.length === 0}
+          >
             Clear view
           </Button>
         </div>
@@ -87,20 +139,53 @@ export function ActivityMonitor() {
         </div>
       ) : (
         <ol className="activity-list" aria-label="Recent activity">
-          {events.map((event) => (
-            <li key={event.id}>
-              <span className={`activity-event-icon ${event.type.replaceAll('.', '-')}`} aria-hidden="true" />
-              <div className="activity-event-main">
-                <div>
-                  <strong>{event.body.summary}</strong>
-                  <Badge variant="outline">{eventLabel(event.type)}</Badge>
+          {events.map((event) => {
+            const storedPath = stringValue(event.body, 'storedPath');
+            const rejectionReason = stringValue(event.body, 'reason');
+            const device = deviceSummary(event);
+            const expandable = Boolean(storedPath || rejectionReason);
+            const expanded = expandedEventId === event.id;
+            return (
+              <li key={event.id} className={expanded ? 'expanded' : undefined}>
+                <span className={`activity-event-icon ${event.type.replaceAll('.', '-')}`} aria-hidden="true" />
+                <div className="activity-event-main">
+                  <div className="activity-event-heading">
+                    <strong>{event.body.summary}</strong>
+                    <div className="activity-event-actions">
+                      <Badge variant="outline">{eventLabel(event.type)}</Badge>
+                      {expandable ? (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          aria-expanded={expanded}
+                          onClick={() => setExpandedEventId(expanded ? null : event.id)}
+                        >
+                          {storedPath ? 'View image' : 'Details'}
+                        </Button>
+                      ) : null}
+                    </div>
+                  </div>
+                  <small>
+                    {sender(event)} · {new Date(event.publishedAt).toLocaleString()}
+                  </small>
+                  {device ? <small className="activity-device-summary">{device}</small> : null}
                 </div>
-                <small>
-                  {sender(event)} · {new Date(event.publishedAt).toLocaleString()}
-                </small>
-              </div>
-            </li>
-          ))}
+                {expanded ? (
+                  <div className="activity-event-details">
+                    {storedPath ? (
+                      <ActivityImage path={storedPath} alt={`Captured image for ${event.body.summary}`} />
+                    ) : null}
+                    {rejectionReason ? (
+                      <div className="activity-rejection-reason">
+                        <span>Reason</span>
+                        <p>{rejectionReason}</p>
+                      </div>
+                    ) : null}
+                  </div>
+                ) : null}
+              </li>
+            );
+          })}
         </ol>
       )}
     </div>
