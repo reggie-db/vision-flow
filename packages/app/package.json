@@ -43,6 +43,7 @@
     "@dbx-tools/email": "^0.9.211",
     "@dbx-tools/lakebase": "^0.9.211",
     "@dbx-tools/postgres": "^0.9.211",
+    "@dbx-tools/shared-auth": "^0.9.211",
     "@dbx-tools/shared-core": "^0.9.211",
     "@dbx-tools/shared-mastra": "^0.9.211",
     "@dbx-tools/tunnel": "^0.9.211",

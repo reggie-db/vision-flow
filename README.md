@@ -37,13 +37,16 @@ bun install
 bun run compile
 ```
 
-Start the app with an explicit Databricks profile:
+Start the app with an explicit Databricks profile. The in-process tunnel starts
+from `PORTR_TOKEN` and `TUNNEL_PUBLIC_DOMAIN` in `packages/app/.env`:
 
 ```bash
 DATABRICKS_CONFIG_PROFILE=<profile> bun packages/app/scripts/local-start.ts
-portr http -s local-vision-flow 8000
 ```
 
-The local tunnel is `https://local-vision-flow.apps.dbx.tools`.
+The public tunnel is `https://vision-flow.apps.dbx.tools`. Tunnel visitors sign
+in through the email gate and are sent to `/mobile`; the Databricks Apps URL
+continues to open the operations workspace. Leave `EMAIL_OUTBOX_MODE` unset and
+configure SMTP when verification codes must reach a phone.
 
 See [packages/app/README.md](packages/app/README.md) for workspace setup and deployment details.

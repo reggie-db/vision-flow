@@ -23,10 +23,5 @@
         }
       ]
     }
-  ],
-  "uiSettings": {
-    "genieSpace": {
-      "isEnabled": false
-    }
-  }
+  ]
 }

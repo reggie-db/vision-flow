@@ -106,6 +106,7 @@ project.applyToProjects(rootProject, { path: "packages/app" }, (app) => {
     `@dbx-tools/email@${dbxToolsVersion}`,
     `@dbx-tools/lakebase@${dbxToolsVersion}`,
     `@dbx-tools/postgres@${dbxToolsVersion}`,
+    `@dbx-tools/shared-auth@${dbxToolsVersion}`,
     `@dbx-tools/shared-core@${dbxToolsVersion}`,
     `@dbx-tools/shared-mastra@${dbxToolsVersion}`,
     `@dbx-tools/tunnel@${dbxToolsVersion}`,

@@ -101,6 +101,11 @@
       "type": "runtime"
     },
     {
+      "name": "@dbx-tools/shared-auth",
+      "version": "^0.9.211",
+      "type": "runtime"
+    },
+    {
       "name": "@dbx-tools/shared-core",
       "version": "^0.9.211",
       "type": "runtime"

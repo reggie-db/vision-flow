@@ -3,8 +3,9 @@ import { appkit, loadBrandContext } from '@dbx-tools/appkit';
 import { agents, genie, mastra } from '@dbx-tools/appkit-mastra';
 import { email } from '@dbx-tools/email';
 import type { TopicMessage } from '@dbx-tools/postgres';
+import { isAuthPath } from '@dbx-tools/shared-auth';
 import { log, toError } from '@dbx-tools/shared-core';
-import { authGate } from '@dbx-tools/tunnel';
+import { authGate, isTunnelHost, tunnelInterceptor } from '@dbx-tools/tunnel';
 import { z } from 'zod';
 import { ACTIVITY_TOPIC, activityBus, publishActivity } from './activity.ts';
 import {
@@ -116,12 +117,15 @@ await ensureDemoCategories();
 const brand = await loadBrandContext();
 
 await appkit.createApp({
-  interceptor(context) {
-    context.onLifecycle('shutdown', async () => {
-      await activityBus.close();
-      await database.end();
-    });
-  },
+  interceptor: [
+    tunnelInterceptor(),
+    (context) => {
+      context.onLifecycle('shutdown', async () => {
+        await activityBus.close();
+        await database.end();
+      });
+    },
+  ],
   plugins: [
     server({ bodyLimit: '11mb', staticPath: 'client/dist' }),
     ...(TUNNEL_ENABLED
@@ -159,6 +163,25 @@ await appkit.createApp({
   ],
   onPluginsReady(app) {
     app.server.extend((http) => {
+      http.use((request, response, next) => {
+        const publicDomain = process.env.TUNNEL_PUBLIC_DOMAIN;
+        const appNavigation =
+          request.method === 'GET' &&
+          request.path !== '/health' &&
+          !request.path.startsWith('/api/') &&
+          !request.path.includes('.');
+        if (
+          appNavigation &&
+          isTunnelHost(request, publicDomain) &&
+          request.path !== '/mobile' &&
+          !isAuthPath(request.path)
+        ) {
+          response.redirect(302, '/mobile');
+          return;
+        }
+        next();
+      });
+
       http.use((request, response, next) => {
         if (request.path === '/' || request.path.endsWith('.html')) {
           response.setHeader('Cache-Control', 'no-store, max-age=0');
