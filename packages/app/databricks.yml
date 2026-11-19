@@ -5,6 +5,15 @@ variables:
   app_name:
     description: Databricks App resource name
     default: vision-flow
+  tunnel_public_domain:
+    description: Public Portr domain registered by the deployed Databricks App
+    default: vision-flow.apps.dbx.tools
+  portr_secret_scope:
+    description: Secret scope containing the shared apps.dbx.tools Portr token
+    default: dbx-tools-demo
+  portr_secret_key:
+    description: Secret key containing the shared apps.dbx.tools Portr token
+    default: portr-token
   catalog:
     description: Unity Catalog catalog for pipeline outputs
     default: reggie_pierce_aws_catalog
@@ -212,6 +221,11 @@ resources:
           secret:
             scope: ${var.lakebase_secret_scope}
             key: ${var.lakebase_password_key}
+            permission: READ
+        - name: portr-token
+          secret:
+            scope: ${var.portr_secret_scope}
+            key: ${var.portr_secret_key}
             permission: READ
         - name: genie-space
           genie_space:

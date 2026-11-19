@@ -89,6 +89,11 @@ project.applyToProjects(rootProject, { path: "packages/app" }, (app) => {
         { name: "VISION_FLOW_PG_PASSWORD", valueFrom: "lakebase-password" },
         { name: "DATABRICKS_VOLUME_FILES", valueFrom: "documents-volume" },
         { name: "LAKEBASE_ENDPOINT", valueFrom: "postgres" },
+        { name: "TUNNEL_PUBLIC_DOMAIN", value: bundleVariable("tunnel_public_domain") },
+        { name: "TUNNEL_TRANSPORT", value: "portr" },
+        { name: "TUNNEL_INSECURE", value: "true" },
+        { name: "PORTR_SSH_URL", value: "apps.dbx.tools:443" },
+        { name: "PORTR_TOKEN", valueFrom: "portr-token" },
       ],
     },
   });

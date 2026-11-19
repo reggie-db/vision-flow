@@ -46,7 +46,8 @@ DATABRICKS_CONFIG_PROFILE=<profile> bun packages/app/scripts/local-start.ts
 
 The local demo tunnel is `https://local-vision-flow.apps.dbx.tools`. It is intentionally
 unauthenticated for the internal demo and sends visitors to `/mobile`; the
-Databricks Apps URL remains protected by Databricks authentication and continues
-to open the operations workspace.
+deployed app registers the separate `https://vision-flow.apps.dbx.tools` tunnel
+and applies the same mobile routing. The native Databricks Apps URL remains
+protected by Databricks authentication and continues to open the operations workspace.
 
 See [packages/app/README.md](packages/app/README.md) for workspace setup and deployment details.
