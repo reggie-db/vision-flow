@@ -103,7 +103,7 @@ variables:
     default: 30
   mastra_genie_identity:
     description: Databricks identity used by the Mastra assistant for model, Genie, and statement calls
-    default: auto
+    default: service-principal
   review_threshold:
     description: Self-assessed confidence threshold below which extraction needs review
     default: 0.80

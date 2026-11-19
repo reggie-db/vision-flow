@@ -51,7 +51,7 @@ env:
   - name: VISION_FLOW_WORKSPACE_HOST
     value: https://fevm-reggie-pierce-aws.cloud.databricks.com
   - name: MASTRA_GENIE_IDENTITY
-    value: auto
+    value: service-principal
   - name: VISION_FLOW_REVIEW_THRESHOLD
     value: "0.8"
   - name: VISION_FLOW_PG_USER

@@ -202,6 +202,7 @@ await appkit.createApp({
       storage: { id: 'vision-flow-mastra', ...mastraPostgres, schemaName: 'mastra_instance' },
       memory: false,
       genieIdentity: config.mastraGenieIdentity,
+      defaultModel: config.modelService,
       genieSpaces: {
         default: {
           spaceId: config.genieSpaceId,
