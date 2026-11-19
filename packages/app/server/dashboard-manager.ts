@@ -364,6 +364,9 @@ function serializedDashboard(categories: DashboardCategoryRecord[]): { serialize
     datasets: built.map((item) => item.dataset),
     pages: built.map((item) => item.page),
     uiSettings: {
+      genieSpace: {
+        isEnabled: false,
+      },
       theme: {
         canvasBackgroundColor: { light: '#F7F8FA', dark: '#1F272D' },
         widgetBackgroundColor: { light: '#FFFFFF', dark: '#11171C' },
